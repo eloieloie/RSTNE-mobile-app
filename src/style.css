@@ -1,0 +1,59 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --color-first-covenant-bg: #FFF8DC;
+  --color-first-covenant-text: #8B4513;
+  --color-first-covenant-border: #DEB887;
+  --color-new-covenant-bg: #E6F2FF;
+  --color-new-covenant-text: #1E40AF;
+  --color-new-covenant-border: #93C5FD;
+  --color-apocryphal-bg: #F3E8FF;
+  --color-apocryphal-text: #6B21A8;
+  --color-apocryphal-border: #D8B4FE;
+  --nav-height: 60px;
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+  background: #f8f9fa;
+  color: #2c3e50;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+#app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+
+input {
+  font-family: inherit;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 2px;
+}
