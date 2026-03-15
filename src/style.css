@@ -46,6 +46,12 @@ input {
   font-family: inherit;
 }
 
+/* PaleoBora font for sacred name patterns */
+.paleobora-text {
+  font-family: 'PaleoBora', serif !important;
+  font-size: 1.1em;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 4px;

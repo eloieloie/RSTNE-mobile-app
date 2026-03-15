@@ -1,6 +1,15 @@
 import type { Verse } from '@/utils/collectionReferences';
+import type { CrossReferenceData } from '@/api/crossReferences';
 
 const API_URL = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api';
+
+export interface VerseNote {
+  verse_note_id: number;
+  verse_id: number;
+  note_id: number;
+  note_title: string | null;
+  note_content: string;
+}
 
 export interface VerseLinkData {
   link_id: number;
@@ -15,6 +24,8 @@ export interface VerseLinkData {
 
 export interface VerseWithLinks extends Verse {
   links?: VerseLinkData[];
+  notes?: VerseNote[];
+  crossReferences?: CrossReferenceData[];
 }
 
 export interface VerseSearchResult extends VerseWithLinks {
@@ -31,7 +42,8 @@ export async function getVersesByChapterId(chapterId: number): Promise<VerseWith
 }
 
 export async function searchVersesByText(searchText: string): Promise<VerseSearchResult[]> {
-  const response = await fetch(`${API_URL}/verses/search?q=${encodeURIComponent(searchText)}`);
+  const response = await fetch(`${API_URL}/verses/text-search?q=${encodeURIComponent(searchText)}`);
   if (!response.ok) throw new Error('Failed to search verses');
-  return response.json();
+  const data = await response.json();
+  return data.results ?? [];
 }

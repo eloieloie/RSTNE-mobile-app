@@ -8,7 +8,7 @@
         </svg>
         <input
           ref="inputEl"
-          v-model="query"
+          v-model="state.query"
           type="search"
           placeholder="Search scriptures..."
           @keyup.enter="search"
@@ -17,33 +17,38 @@
           autocapitalize="off"
           spellcheck="false"
         />
-        <button v-if="query" class="clear-btn" @click="clear">
+        <button v-if="state.query" class="clear-btn" @click="clear">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 6 6 18M6 6l12 12"/>
           </svg>
         </button>
       </div>
-      <button class="search-go-btn" :disabled="!query.trim() || searching" @click="search">Search</button>
+      <button class="search-go-btn" :disabled="!state.query.trim() || state.searching" @click="search">Search</button>
     </header>
 
-    <div v-if="searching" class="state-container">
+    <div v-if="state.searching" class="state-container">
       <div class="spinner"></div>
     </div>
 
-    <div v-else-if="searched && results.length === 0" class="state-container empty-text">
-      No results for "{{ lastQuery }}"
+    <div v-else-if="state.error" class="state-container empty-text error-text">
+      {{ state.error }}
     </div>
 
-    <div v-else-if="results.length" class="results-scroll">
-      <div class="results-count">{{ results.length }} result{{ results.length !== 1 ? 's' : '' }}</div>
+    <div v-else-if="state.searched && state.results.length === 0" class="state-container empty-text">
+      No results for "{{ state.lastQuery }}"
+    </div>
+
+    <div v-else-if="state.results.length" class="results-scroll">
+      <div class="results-count">{{ state.results.length }} result{{ state.results.length !== 1 ? 's' : '' }}</div>
       <div
-        v-for="result in results"
+        v-for="result in state.results"
         :key="result.verse_id"
         class="result-card"
         @click="openVerse(result)"
       >
         <div class="result-ref">{{ result.book_name }} {{ result.chapter_number }}:{{ result.verse_index }}</div>
-        <div class="result-text" v-html="highlightedText(result.verse)"></div>
+        <div class="result-text" v-html="formattedResult(result.verse)"></div>
+        <div v-if="result.telugu_verse" class="result-telugu" v-html="formattedResult(result.telugu_verse)"></div>
       </div>
     </div>
 
@@ -57,49 +62,60 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { searchVersesByText } from '@/api/verses';
-import type { VerseSearchResult } from '@/api/verses';
+import { formatVerseWithPaleoBora } from '@/utils/formatVerse';
+import { searchState as state } from '@/composables/useSearchState';
 
 const router = useRouter();
-const query = ref('');
-const results = ref<VerseSearchResult[]>([]);
-const searching = ref(false);
-const searched = ref(false);
-const lastQuery = ref('');
+const inputEl = ref<HTMLInputElement | null>(null);
 
 function escapeRegex(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function highlightedText(text: string): string {
-  if (!lastQuery.value) return text;
-  const escaped = escapeRegex(lastQuery.value.trim());
-  return text.replace(new RegExp(`(${escaped})`, 'gi'), '<mark>$1</mark>');
+function formattedResult(text: string | null | undefined): string {
+  if (!text) return '';
+  // Apply PaleoBora spans first, then highlight search terms
+  let result = formatVerseWithPaleoBora(text);
+  if (state.lastQuery) {
+    const escaped = escapeRegex(state.lastQuery.trim());
+    result = result.replace(new RegExp(`(${escaped})`, 'gi'), '<mark>$1</mark>');
+  }
+  return result;
 }
 
 async function search() {
-  const q = query.value.trim();
+  const q = state.query.trim();
   if (!q) return;
-  searching.value = true;
-  searched.value = false;
-  lastQuery.value = q;
+  state.searching = true;
+  state.searched = false;
+  state.error = '';
+  state.lastQuery = q;
   try {
-    results.value = await searchVersesByText(q);
-  } catch {
-    results.value = [];
+    state.results = await searchVersesByText(q);
+  } catch (e) {
+    state.results = [];
+    state.error = 'Search failed. Please check your connection and try again.';
+    console.error('Search error:', e);
   } finally {
-    searching.value = false;
-    searched.value = true;
+    state.searching = false;
+    state.searched = true;
   }
 }
 
 function clear() {
-  query.value = '';
-  results.value = [];
-  searched.value = false;
+  state.query = '';
+  state.results = [];
+  state.searched = false;
+  state.error = '';
+  state.lastQuery = '';
 }
 
 function openVerse(result: VerseSearchResult) {
-  router.push({ name: 'reading', params: { bookId: result.book_id, chapterId: result.chapter_id } });
+  router.push({
+    name: 'reading',
+    params: { bookId: result.book_id, chapterId: result.chapter_id },
+    query: { verse: result.verse_index },
+  });
 }
 </script>
 
@@ -189,6 +205,10 @@ input::placeholder {
   to { transform: rotate(360deg); }
 }
 
+.error-text {
+  color: #dc2626;
+}
+
 .empty-text,
 .hint-text {
   color: #9ca3af;
@@ -238,10 +258,31 @@ input::placeholder {
   line-height: 1.6;
 }
 
+.result-telugu {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.6;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid #f3f4f6;
+}
+
 :deep(mark) {
   background: #fef08a;
   color: inherit;
   border-radius: 2px;
   padding: 0 1px;
+}
+
+:deep(.paleobora-text) {
+  font-family: 'PaleoBora', serif;
+  font-size: 1.1em;
+}
+
+:deep(.result-text p),
+:deep(.result-telugu p) {
+  display: inline;
+  margin: 0;
+  padding: 0;
 }
 </style>
