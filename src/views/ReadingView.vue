@@ -31,7 +31,7 @@
 
     <div v-else-if="error" class="state-overlay error-text">{{ error }}</div>
 
-    <!-- Verses -->
+    <!-- Verses — always keep mounted once loaded so versesEl ref stays valid during scrollPending -->
     <main v-else class="verses-scroll" ref="versesEl">
       <div v-if="!selectedChapter" class="empty-state">Select a chapter to start reading.</div>
 
@@ -48,14 +48,21 @@
           :data-verse-index="verse.verse_index"
         >
           <div class="verse-body">
-            <span class="verse-num">{{ verse.verse_index }}</span><span class="verse-text" :style="{ fontSize: settings.fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.verse, bookAbbreviations)"></span>
-
-            <span
-              v-if="settings.showTelugu && verse.telugu_verse"
-              class="verse-telugu"
-              :style="{ fontSize: settings.fontSize + 'px' }"
-              v-html="formatVerseWithPaleoBora(verse.telugu_verse, bookAbbreviations)"
-            ></span>
+            <!-- English on: num + english inline, telugu as block below -->
+            <template v-if="settings.showEnglish">
+              <span class="verse-num">{{ verse.verse_index }}</span><span class="verse-text" :style="{ fontSize: settings.fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.verse, bookAbbreviations)"></span>
+              <span
+                v-if="settings.showTelugu && verse.telugu_verse"
+                class="verse-telugu"
+                :style="{ fontSize: settings.fontSize + 'px' }"
+                v-html="formatVerseWithPaleoBora(verse.telugu_verse, bookAbbreviations)"
+              ></span>
+            </template>
+            <!-- English off: num immediately adjacent to telugu (no comment nodes between) -->
+            <template v-else>
+              <span v-if="settings.showTelugu && verse.telugu_verse" class="verse-telugu" :style="{ fontSize: settings.fontSize + 'px' }"><span class="verse-num">{{ verse.verse_index }}</span><span v-html="formatVerseWithPaleoBora(verse.telugu_verse, bookAbbreviations)"></span></span>
+              <span v-else class="verse-num">{{ verse.verse_index }}</span>
+            </template>
 
             <div
               v-if="settings.showNotes && verse.notes && verse.notes.length > 0"
@@ -75,13 +82,20 @@
               v-if="settings.showCrossReferences && verse.crossReferences && verse.crossReferences.length > 0"
               class="cross-refs"
             >
-<button
-                v-for="ref in verse.crossReferences"
+              <button
+                v-for="ref in (expandedCrossRefs.has(verse.verse_id) ? verse.crossReferences : verse.crossReferences.slice(0, 3))"
                 :key="ref.cross_ref_id"
                 class="cross-ref-chip"
                 @click="openCrossRef(ref)"
               >
                 {{ ref.to_book_abbr || ref.to_book_name }} {{ ref.to_chapter }}:{{ ref.to_verse }}
+              </button>
+              <button
+                v-if="!expandedCrossRefs.has(verse.verse_id) && verse.crossReferences.length > 3"
+                class="cross-ref-chip cross-ref-more"
+                @click="expandedCrossRefs = new Set(expandedCrossRefs).add(verse.verse_id)"
+              >
+                +{{ verse.crossReferences.length - 3 }} more
               </button>
             </div>
           </div>
@@ -109,6 +123,11 @@
         </div>
       </div>
     </main>
+
+    <!-- Scroll-pending overlay: sits on top of already-rendered content so versesEl ref stays valid -->
+    <div v-if="scrollPending" class="scroll-pending-overlay">
+      <div class="spinner"></div>
+    </div>
 
     <!-- Cross-reference preview bottom sheet -->
     <Transition name="sheet">
@@ -220,6 +239,8 @@ const crossRefSheet = ref({
 
 const pendingScrollToVerse = ref<string | null>(null);
 const highlightedVerseIndex = ref<string | null>(null);
+const scrollPending = ref(false);
+const expandedCrossRefs = ref(new Set<number>());
 const bookAbbreviations = ref<Record<string, number>>({});
 
 // Shared helper: open the preview sheet for any book/chapter/verse
@@ -284,10 +305,26 @@ function handleInlineVerseClick(e: MouseEvent) {
   openVersePreview(targetBookId, bookName, chapter, verse);
 }
 
-function goToCrossRef() {
+async function goToCrossRef() {
   const { targetBookId, targetChapterId, targetVerseIndex } = crossRefSheet.value;
-  if (!targetBookId || !targetChapterId) return;
+  console.log('[goToCrossRef] targetBookId:', targetBookId, 'targetChapterId:', targetChapterId, 'targetVerseIndex:', targetVerseIndex);
+  console.log('[goToCrossRef] selectedChapter.chapter_id:', selectedChapter.value?.chapter_id);
+  if (!targetBookId || !targetChapterId) {
+    console.warn('[goToCrossRef] missing targetBookId or targetChapterId — aborting');
+    return;
+  }
   crossRefSheet.value.show = false;
+
+  // Same chapter — no navigation needed, scroll directly
+  if (targetChapterId === selectedChapter.value?.chapter_id) {
+    console.log('[goToCrossRef] same chapter — scrolling directly to verse', targetVerseIndex);
+    pendingScrollToVerse.value = targetVerseIndex;
+    await applyPendingScroll();
+    return;
+  }
+
+  // Different chapter — set pending scroll then navigate; watch will pick it up
+  console.log('[goToCrossRef] different chapter — setting pendingScrollToVerse and navigating');
   pendingScrollToVerse.value = targetVerseIndex;
   router.replace({ name: 'reading', params: { bookId: targetBookId, chapterId: targetChapterId } });
 }
@@ -313,7 +350,7 @@ const nextChapter = computed(() =>
     : null,
 );
 
-async function loadVerses(chapter: Chapter) {
+async function loadVerses(chapter: Chapter, deferCrossRefs = false) {
   selectedChapter.value = chapter;
   verses.value = [];
   try {
@@ -322,22 +359,42 @@ async function loadVerses(chapter: Chapter) {
     // verses stay empty
   }
   versesEl.value?.scrollTo({ top: 0 });
-  // Lazy-load cross references in the background
-  loadCrossReferences(chapter);
+  if (!deferCrossRefs) loadCrossReferences(chapter);
 }
 
-async function applyPendingScroll() {
-  if (!pendingScrollToVerse.value) return;
+async function applyPendingScroll(chapter?: Chapter) {
+  console.log('[applyPendingScroll] called, pendingScrollToVerse:', pendingScrollToVerse.value, 'chapter:', chapter?.chapter_id);
+  if (!pendingScrollToVerse.value) {
+    console.log('[applyPendingScroll] no pending verse — skipping scroll');
+    if (chapter) loadCrossReferences(chapter);
+    return;
+  }
   const verseIdx = pendingScrollToVerse.value;
   pendingScrollToVerse.value = null;
-  await nextTick();
-  const el = versesEl.value?.querySelector(`[data-verse-index="${verseIdx}"]`) as HTMLElement | null;
-  if (el && versesEl.value) {
-    const containerTop = versesEl.value.getBoundingClientRect().top;
-    const elTop = el.getBoundingClientRect().top;
-    versesEl.value.scrollTop += elTop - containerTop - 16;
-    highlightedVerseIndex.value = verseIdx;
-    setTimeout(() => { highlightedVerseIndex.value = null; }, 5000);
+  scrollPending.value = true;
+  try {
+    await nextTick();
+    await document.fonts.ready;
+    await new Promise<void>(r => requestAnimationFrame(() => r()));
+    const el = versesEl.value?.querySelector(`[data-verse-index="${verseIdx}"]`) as HTMLElement | null;
+    console.log('[applyPendingScroll] looking for [data-verse-index="' + verseIdx + '"] →', el ? 'FOUND' : 'NOT FOUND');
+    console.log('[applyPendingScroll] versesEl:', versesEl.value, 'verses count:', verses.value.length);
+    if (el && versesEl.value) {
+      const containerTop = versesEl.value.getBoundingClientRect().top;
+      const elTop = el.getBoundingClientRect().top;
+      const scrollDelta = elTop - containerTop - 16;
+      console.log('[applyPendingScroll] scrollTop before:', versesEl.value.scrollTop, 'delta:', scrollDelta);
+      versesEl.value.scrollTop += scrollDelta;
+      console.log('[applyPendingScroll] scrollTop after:', versesEl.value.scrollTop);
+      highlightedVerseIndex.value = verseIdx;
+      setTimeout(() => { highlightedVerseIndex.value = null; }, 5000);
+    } else {
+      console.warn('[applyPendingScroll] could not scroll — el:', el, 'versesEl:', versesEl.value);
+    }
+  } finally {
+    scrollPending.value = false;
+    // Start cross-ref loading only after scroll is settled
+    if (chapter) loadCrossReferences(chapter);
   }
 }
 
@@ -378,6 +435,7 @@ onMounted(async () => {
     bookAbbreviations.value = map;
   }).catch(() => {});
 
+  let loadedChapter: Chapter | undefined;
   try {
     const [book, chaps] = await Promise.all([
       getBookById(bookId.value),
@@ -391,15 +449,17 @@ onMounted(async () => {
     const target = targetId ? chaps.find(c => c.chapter_id === targetId) : sorted[0];
 
     if (target) {
-      await loadVerses(target);
-      if (route.query.verse) pendingScrollToVerse.value = String(route.query.verse);
+      loadedChapter = target;
+      const verseParam = route.query.verse ? String(route.query.verse) : null;
+      await loadVerses(target, !!verseParam);
+      if (verseParam) pendingScrollToVerse.value = verseParam;
     }
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to load book';
   } finally {
     loading.value = false;
   }
-  await applyPendingScroll();
+  await applyPendingScroll(loadedChapter);
 });
 
 onUnmounted(() => {
@@ -409,10 +469,12 @@ onUnmounted(() => {
 });
 
 watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
+  console.log('[watch bookId/chapterId] newBookId:', newBookId, 'oldBookId:', oldBookId, 'newChapterId:', newChapterId, 'pendingScrollToVerse:', pendingScrollToVerse.value);
   if (newBookId !== oldBookId) {
     // Book changed — reload book, chapters, then target chapter
     loading.value = true;
     error.value = null;
+    let loadedChapter: Chapter | undefined;
     try {
       const [book, chaps] = await Promise.all([
         getBookById(newBookId),
@@ -423,23 +485,25 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
       const sorted = [...chaps].sort((a, b) => parseInt(a.chapter_number) - parseInt(b.chapter_number));
       const target = newChapterId ? chaps.find(c => c.chapter_id === newChapterId) : sorted[0];
       if (target) {
-        await loadVerses(target);
-        if (route.query.verse) pendingScrollToVerse.value = String(route.query.verse);
+        loadedChapter = target;
+        const verseParam = route.query.verse ? String(route.query.verse) : null;
+        if (verseParam) pendingScrollToVerse.value = verseParam;
+        await loadVerses(target, !!(verseParam || pendingScrollToVerse.value));
       }
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to load book';
     } finally {
       loading.value = false;
     }
-    // DOM is now visible — scroll after loading spinner is gone
-    await applyPendingScroll();
+    await applyPendingScroll(loadedChapter);
   } else if (newChapterId) {
     // Same book, different chapter
     const ch = chapters.value.find(c => c.chapter_id === newChapterId);
     if (ch) {
-      await loadVerses(ch);
-      if (route.query.verse) pendingScrollToVerse.value = String(route.query.verse);
-      await applyPendingScroll();
+      const verseParam = route.query.verse ? String(route.query.verse) : null;
+      if (verseParam) pendingScrollToVerse.value = verseParam;
+      await loadVerses(ch, !!(verseParam || pendingScrollToVerse.value));
+      await applyPendingScroll(ch);
     }
   }
 });
@@ -447,6 +511,7 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
 
 <style scoped>
 .reading-view {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -499,6 +564,16 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.scroll-pending-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.75);
+  z-index: 10;
 }
 
 .spinner {
@@ -567,7 +642,8 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   line-height: 1.75;
 }
 
-:deep(.verse-text p) {
+:deep(.verse-text p),
+:deep(.verse-telugu p) {
   display: inline;
   margin: 0;
   padding: 0;
@@ -644,6 +720,11 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   padding: 3px 10px;
   font-weight: 500;
   -webkit-tap-highlight-color: transparent;
+}
+
+.cross-ref-more {
+  color: #6b7280;
+  background: #f3f4f6;
 }
 
 /* Cross-ref preview sheet */

@@ -11,6 +11,20 @@
         <div class="settings-group">
           <label class="setting-item">
             <div class="setting-label">
+              <span class="setting-name">Show English Verse</span>
+              <span class="setting-desc">Display the English verse text while reading</span>
+            </div>
+            <button
+              class="toggle-switch"
+              :class="{ active: settings.showEnglish }"
+              @click="settings.showEnglish = !settings.showEnglish"
+            >
+              <span class="toggle-slider"></span>
+            </button>
+          </label>
+
+          <label class="setting-item">
+            <div class="setting-label">
               <span class="setting-name">Show Telugu Verse</span>
               <span class="setting-desc">Display Telugu translation below each verse</span>
             </div>

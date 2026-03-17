@@ -1,6 +1,7 @@
 import { reactive, watch } from 'vue';
 
 interface Settings {
+  showEnglish: boolean;
   showTelugu: boolean;
   showNotes: boolean;
   showCrossReferences: boolean;
@@ -11,6 +12,7 @@ interface Settings {
 const STORAGE_KEY = 'rstne-settings';
 
 const defaults: Settings = {
+  showEnglish: true,
   showTelugu: false,
   showNotes: false,
   showCrossReferences: false,
