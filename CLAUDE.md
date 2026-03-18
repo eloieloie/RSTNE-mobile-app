@@ -24,6 +24,7 @@ src/
     chapters.ts           # GET /books/:id/chapters
     verses.ts             # GET /chapters/:id/verses, verse search; VerseWithLinks type
     crossReferences.ts    # GET /cross-references?bookId=&chapter=&verse=; CrossReferenceData type
+    appVersion.ts         # GET /app-version; AppVersionInfo type; compareSemver() utility
   composables/
     useSettings.ts        # Reactive settings singleton with localStorage persistence
     useSearchState.ts     # Module-level reactive state for SearchView (persists across tab switches)
@@ -61,6 +62,13 @@ Key endpoints:
 - `GET /chapters/:id/verses` — verses for a chapter; returns `VerseWithLinks[]` with `telugu_verse`, `notes[]`, `links[]`
 - `GET /verses/text-search?q=` — full-text verse search; returns `{ results: VerseSearchResult[] }` (unwrap `.results`)
 - `GET /cross-references?bookId=&chapter=&verse=` — cross references for a verse; returns `CrossReferenceData[]`
+- `GET /app-version` — returns `{ min_version, max_version }` from `app_version_tbl`; called once on app mount in `App.vue` to enforce forced-update check
+
+## App Version Check (App.vue)
+
+On mount, `App.vue` calls `getAppVersion()` from `src/api/appVersion.ts` and compares the result's `min_version` against the hardcoded `APP_VERSION` constant (set to the current `package.json` version). If the current version is below `min_version`, a full-screen blocking modal is shown telling the user to update. The modal cannot be dismissed. If the API call fails, the app proceeds normally (fail-open).
+
+**When bumping the app version:** update `APP_VERSION` in `App.vue` to match the new `package.json` version.
 
 ## Reading Features (ReadingView.vue)
 

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "212458038004",
+    "project_id": "rstne-app-2025",
+    "storage_bucket": "rstne-app-2025.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:212458038004:android:d79ce77bca093594fef4a1",
+        "android_client_info": {
+          "package_name": "com.rstne.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBSAKYiJwHxcDUFvUFh_5F8PPIhzFpHYgo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

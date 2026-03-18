@@ -46,6 +46,7 @@
           class="verse-row"
           :class="{ highlighted: String(verse.verse_index) === highlightedVerseIndex }"
           :data-verse-index="verse.verse_index"
+          @click="selectVerse(verse.verse_id)"
         >
           <div class="verse-body">
             <!-- English on: num + english inline, telugu as block below -->
@@ -97,6 +98,23 @@
               >
                 +{{ verse.crossReferences.length - 3 }} more
               </button>
+            </div>
+
+            <!-- Share action bar (visible when verse is selected) -->
+            <div v-if="selectedVerseId === verse.verse_id" class="verse-actions" @click.stop>
+              <div class="verse-actions-bar">
+                <button class="verse-action-btn" @click.stop="shareVerse(verse)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="18" cy="5" r="3"></circle>
+                    <circle cx="6" cy="12" r="3"></circle>
+                    <circle cx="18" cy="19" r="3"></circle>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                  </svg>
+                  Share
+                </button>
+                <span v-if="copiedVerseId === verse.verse_id" class="copied-feedback">Copied!</span>
+              </div>
             </div>
           </div>
         </div>
@@ -187,6 +205,9 @@ import { getCrossReferences } from '@/api/crossReferences';
 import type { CrossReferenceData } from '@/api/crossReferences';
 import { useSettings } from '@/composables/useSettings';
 import { formatVerseWithPaleoBora } from '@/utils/formatVerse';
+import { generateVerseCardImage, stripHtmlKeepPaleo } from '@/utils/paleoBora';
+import { Share } from '@capacitor/share';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 
 const route = useRoute();
 const router = useRouter();
@@ -236,6 +257,9 @@ const crossRefSheet = ref({
   targetChapterId: null as number | null,
   targetVerseIndex: null as string | null,
 });
+
+const selectedVerseId = ref<number | null>(null);
+const copiedVerseId = ref<number | null>(null);
 
 const pendingScrollToVerse = ref<string | null>(null);
 const highlightedVerseIndex = ref<string | null>(null);
@@ -352,6 +376,7 @@ const nextChapter = computed(() =>
 
 async function loadVerses(chapter: Chapter, deferCrossRefs = false) {
   selectedChapter.value = chapter;
+  selectedVerseId.value = null;
   verses.value = [];
   try {
     verses.value = await getVersesByChapterId(chapter.chapter_id);
@@ -423,6 +448,41 @@ function navigateToChapter(id: number) {
   router.replace({ name: 'reading', params: { bookId: bookId.value, chapterId: id } });
 }
 
+function selectVerse(verseId: number) {
+  selectedVerseId.value = selectedVerseId.value === verseId ? null : verseId;
+}
+
+async function shareVerse(verse: VerseWithLinks) {
+  if (!selectedChapter.value || !currentBook.value) return;
+  const reference = `${currentBook.value.book_name} ${selectedChapter.value.chapter_number}:${verse.verse_index}`;
+  const bookSlug = currentBook.value.book_name.toLowerCase().replace(/\s+/g, '-');
+  const verseUrl = `https://eat-rstne-26.web.app/${bookSlug}/${selectedChapter.value.chapter_number}/${verse.verse_index}`;
+  selectedVerseId.value = null;
+  try {
+    const cardFile = await generateVerseCardImage({
+      reference,
+      englishText: verse.verse ? stripHtmlKeepPaleo(verse.verse) : undefined,
+      teluguText: settings.showTelugu && verse.telugu_verse ? stripHtmlKeepPaleo(verse.telugu_verse) : undefined,
+      verseNotes: settings.showNotes && verse.notes?.length ? verse.notes : undefined,
+      verseUrl,
+      fontSizePx: settings.fontSize,
+    });
+    // Convert to base64 (strip data URL prefix) and write to cache file
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(cardFile);
+    });
+    const base64 = dataUrl.split(',')[1];
+    await Filesystem.writeFile({ path: 'verse-share.png', data: base64, directory: Directory.Cache });
+    const { uri } = await Filesystem.getUri({ path: 'verse-share.png', directory: Directory.Cache });
+    await Share.share({ title: reference, text: verseUrl, files: [uri], dialogTitle: 'Share verse' });
+  } catch {
+    // user cancelled or share failed
+  }
+}
+
 onMounted(async () => {
   if (settings.keepScreenOn) acquireWakeLock();
   document.addEventListener('visibilitychange', onVisibilityChange);
@@ -467,6 +527,18 @@ onUnmounted(() => {
   document.removeEventListener('visibilitychange', onVisibilityChange);
   document.removeEventListener('click', handleInlineVerseClick);
 });
+
+// Handles push-notification deep links that land on the same bookId+chapterId
+// but need to scroll to a (possibly identical) verse. _t changes every tap so
+// Vue Router always navigates, and this watch always fires.
+watch(
+  () => [route.query.verse, route.query._t] as const,
+  ([newVerse]) => {
+    if (!newVerse || !selectedChapter.value) return;
+    pendingScrollToVerse.value = String(newVerse);
+    applyPendingScroll(selectedChapter.value);
+  },
+);
 
 watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   console.log('[watch bookId/chapterId] newBookId:', newBookId, 'oldBookId:', oldBookId, 'newChapterId:', newChapterId, 'pendingScrollToVerse:', pendingScrollToVerse.value);
@@ -789,6 +861,37 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   color: #9ca3af;
   font-size: 14px;
   padding: 40px 20px;
+}
+
+/* Verse share action bar */
+.verse-actions {
+  margin-top: 8px;
+}
+
+.verse-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.verse-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1E40AF;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: #E6F2FF;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 44px;
+}
+
+.copied-feedback {
+  font-size: 12px;
+  color: #16a34a;
+  font-weight: 500;
 }
 
 .chapter-nav-row {

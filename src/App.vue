@@ -4,6 +4,28 @@
       <RouterView />
     </div>
 
+    <!-- Update required modal -->
+    <div v-if="showUpdateModal" class="update-overlay">
+      <div class="update-modal">
+        <div class="update-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <h2>Update Required</h2>
+        <p>A newer version of RSTNE is required to continue. Please update the app to access the latest content.</p>
+        <p class="version-info">Your version: <strong>{{ APP_VERSION }}</strong></p>
+        <a
+          href="https://play.google.com/store/apps/details?id=com.rstne.app"
+          target="_blank"
+          rel="noopener"
+          class="update-btn"
+        >Update on Play Store</a>
+      </div>
+    </div>
+
     <nav class="bottom-nav">
       <RouterLink to="/" class="tab-item" :class="{ active: route.name === 'books' }">
         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -46,11 +68,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { RouterView, RouterLink, useRoute } from 'vue-router';
+import { ref, watch, onMounted } from 'vue';
+import { RouterView, RouterLink, useRoute, useRouter } from 'vue-router';
+import { getAppVersion, compareSemver } from '@/api/appVersion';
+import { Capacitor } from '@capacitor/core';
+import { initPushNotifications } from '@/composables/usePushNotifications';
+
+const APP_VERSION = '3.1.0';
 
 const route = useRoute();
+const router = useRouter();
 const lastReadingRoute = ref<string | null>(null);
+const showUpdateModal = ref(false);
 
 watch(
   () => route.fullPath,
@@ -60,6 +89,21 @@ watch(
     }
   },
 );
+
+onMounted(async () => {
+  try {
+    const { min_version } = await getAppVersion();
+    if (compareSemver(APP_VERSION, min_version) < 0) {
+      showUpdateModal.value = true;
+    }
+  } catch {
+    // If version check fails, allow the app to continue normally
+  }
+
+  if (Capacitor.isNativePlatform()) {
+    initPushNotifications(router);
+  }
+});
 </script>
 
 <style scoped>
@@ -107,5 +151,68 @@ watch(
 
 .tab-item svg {
   flex-shrink: 0;
+}
+
+.update-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 24px;
+}
+
+.update-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 24px;
+  max-width: 320px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.update-icon {
+  color: #1E40AF;
+  margin-bottom: 4px;
+}
+
+.update-modal h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.update-modal p {
+  font-size: 15px;
+  color: #4b5563;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.update-modal .version-info {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.update-btn {
+  display: inline-block;
+  margin-top: 4px;
+  background: #1E40AF;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 14px 24px;
+  border-radius: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 </style>
