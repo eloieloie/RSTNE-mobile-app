@@ -182,9 +182,32 @@
               :key="ch.chapter_id"
               class="chapter-item"
               :class="{ selected: ch.chapter_id === selectedChapter?.chapter_id }"
-              @click="navigateToChapter(ch.chapter_id); showChapterPicker = false"
+              @click="openVersePicker(ch)"
             >
               {{ ch.chapter_number }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- Verse picker bottom sheet -->
+    <Transition name="sheet">
+      <div v-if="showVersePicker" class="sheet-backdrop" @click="showVersePicker = false">
+        <div class="bottom-sheet" @click.stop>
+          <div class="sheet-handle"></div>
+          <h3 class="sheet-title">{{ currentBook?.book_name }} {{ versePickerChapter?.chapter_number }} — Select Verse</h3>
+          <div v-if="versePickerLoading" class="sheet-loading">
+            <div class="spinner"></div>
+          </div>
+          <div v-else class="chapter-list">
+            <button
+              v-for="idx in versePickerIndices"
+              :key="idx"
+              class="chapter-item"
+              @click="navigateToPickerVerse(idx)"
+            >
+              {{ idx }}
             </button>
           </div>
         </div>
@@ -245,6 +268,11 @@ const verses = ref<VerseWithLinks[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const showChapterPicker = ref(false);
+const showVersePicker = ref(false);
+const versePickerChapter = ref<Chapter | null>(null);
+const versePickerIndices = ref<string[]>([]);
+const versePickerLoading = ref(false);
+const verseIndicesCache = new Map<number, string[]>();
 const versesEl = ref<HTMLElement | null>(null);
 
 const crossRefSheet = ref({
@@ -446,6 +474,46 @@ async function loadCrossReferences(chapter: Chapter) {
 
 function navigateToChapter(id: number) {
   router.replace({ name: 'reading', params: { bookId: bookId.value, chapterId: id } });
+}
+
+async function openVersePicker(ch: Chapter) {
+  showChapterPicker.value = false;
+  versePickerChapter.value = ch;
+  showVersePicker.value = true;
+  // Reuse already-loaded verses if it's the current chapter
+  if (ch.chapter_id === selectedChapter.value?.chapter_id && verses.value.length) {
+    versePickerIndices.value = verses.value
+      .map(v => String(v.verse_index))
+      .filter(Boolean)
+      .sort((a, b) => parseInt(a) - parseInt(b));
+    return;
+  }
+  if (verseIndicesCache.has(ch.chapter_id)) {
+    versePickerIndices.value = verseIndicesCache.get(ch.chapter_id)!;
+    return;
+  }
+  versePickerLoading.value = true;
+  try {
+    const vs = await getVersesByChapterId(ch.chapter_id);
+    const indices = vs
+      .map(v => String(v.verse_index))
+      .filter(Boolean)
+      .sort((a, b) => parseInt(a) - parseInt(b));
+    verseIndicesCache.set(ch.chapter_id, indices);
+    versePickerIndices.value = indices;
+  } finally {
+    versePickerLoading.value = false;
+  }
+}
+
+function navigateToPickerVerse(verseIndex: string) {
+  if (!versePickerChapter.value) return;
+  showVersePicker.value = false;
+  router.replace({
+    name: 'reading',
+    params: { bookId: bookId.value, chapterId: versePickerChapter.value.chapter_id },
+    query: { verse: verseIndex },
+  });
 }
 
 function selectVerse(verseId: number) {
@@ -950,6 +1018,12 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   padding: 4px 16px 12px;
   flex-shrink: 0;
   border-bottom: 1px solid #e5e7eb;
+}
+
+.sheet-loading {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
 }
 
 .chapter-list {
