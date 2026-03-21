@@ -156,7 +156,7 @@
             <h3 class="sheet-title">{{ crossRefSheet.title }}</h3>
             <button class="sheet-go-btn" @click="goToCrossRef" title="Go to chapter">↗</button>
           </div>
-          <div class="cross-ref-body">
+          <div class="cross-ref-body" @click="handleCrossRefBodyClick">
             <div v-if="crossRefSheet.loading" class="cross-ref-loading">
               <div class="spinner"></div>
             </div>
@@ -341,6 +341,18 @@ function openCrossRef(crossRef: CrossReferenceData) {
     String(crossRef.to_verse),
     crossRef.target_chapter_id,
   );
+}
+
+function handleCrossRefBodyClick(e: MouseEvent) {
+  const target = e.target as HTMLElement;
+  if (target.tagName !== 'A' || !target.classList.contains('inline-verse-ref')) return;
+  e.preventDefault();
+  const targetBookId = parseInt(target.getAttribute('data-book-id') || '0');
+  const chapter = target.getAttribute('data-chapter') || '';
+  const verse = target.getAttribute('data-verse') || '';
+  if (!targetBookId || !chapter || !verse) return;
+  const bookName = target.textContent?.replace(/#/, '').replace(/\d.*/, '').trim() ?? '';
+  openVersePreview(targetBookId, bookName, chapter, verse);
 }
 
 function handleInlineVerseClick(e: MouseEvent) {

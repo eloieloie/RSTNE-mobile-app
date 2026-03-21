@@ -1,8 +1,8 @@
 <template>
   <div class="books-view">
     <header class="page-header">
-      <h1>RSTNE</h1>
-      <p>Restoration Scriptures True Name Edition</p>
+      <h1>EAT RSTNE 26</h1>
+      <p>Restoration Scriptures True Name Edition in English and Telugu</p>
     </header>
 
     <div v-if="loading" class="state-container">

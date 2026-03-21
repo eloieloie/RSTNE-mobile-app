@@ -9,7 +9,7 @@
         <input
           ref="inputEl"
           v-model="state.query"
-          type="search"
+          type="text"
           placeholder="Search scriptures..."
           @keyup.enter="search"
           autocomplete="off"
