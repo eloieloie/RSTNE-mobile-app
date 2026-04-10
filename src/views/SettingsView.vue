@@ -5,6 +5,21 @@
     </header>
 
     <div class="settings-body">
+      <!-- Book Names Language -->
+      <section class="settings-section">
+        <h2 class="section-title">Book Names Language</h2>
+        <div class="settings-group">
+          <div class="lang-options">
+            <button
+              v-for="opt in langOptions"
+              :key="opt.value"
+              :class="['lang-option-btn', { active: bookNameLanguage === opt.value }]"
+              @click="bookNameLanguage = opt.value"
+            >{{ opt.label }}</button>
+          </div>
+        </div>
+      </section>
+
       <!-- Display Options -->
       <section class="settings-section">
         <h2 class="section-title">Display Options</h2>
@@ -108,8 +123,16 @@
 
 <script setup lang="ts">
 import { useSettings } from '@/composables/useSettings';
+import { useBookLanguage, type BookNameLanguage } from '@/composables/useBookLanguage';
 
 const settings = useSettings();
+const { bookNameLanguage } = useBookLanguage();
+
+const langOptions: { value: BookNameLanguage; label: string }[] = [
+  { value: 'english', label: 'English' },
+  { value: 'hebrew', label: 'Hebrew' },
+  { value: 'telugu', label: 'Telugu' },
+];
 </script>
 
 <style scoped>
@@ -281,5 +304,35 @@ const settings = useSettings();
   color: #374151;
   min-width: 44px;
   text-align: center;
+}
+
+.lang-options {
+  display: flex;
+  gap: 8px;
+  padding: 10px 0 6px;
+}
+
+.lang-option-btn {
+  flex: 1;
+  padding: 10px 8px;
+  border-radius: 10px;
+  border: 1.5px solid #d1d5db;
+  background: #f3f4f6;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #6b7280;
+  min-height: 44px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lang-option-btn:active {
+  opacity: 0.7;
+}
+
+.lang-option-btn.active {
+  background: #1E40AF;
+  border-color: #1E40AF;
+  color: #fff;
 }
 </style>

@@ -11,6 +11,7 @@ const PALEOBORA_PATTERNS = [
 export function formatVerseWithPaleoBora(
   text: string | null | undefined,
   bookAbbreviations?: Record<string, number>,
+  getDisplayAbbr?: (bookId: number, originalAbbr: string) => string,
 ): string {
   if (!text) return '';
 
@@ -24,7 +25,9 @@ export function formatVerseWithPaleoBora(
     result = result.replace(/#([a-z]{4})(\d+)\s+(\d+)/gi, (match, abbr, chapter, verse) => {
       const bookId = bookAbbreviations[abbr.toLowerCase()];
       if (bookId) {
-        return `<a href="#" class="inline-verse-ref" data-book-id="${bookId}" data-chapter="${chapter}" data-verse="${verse}">${match}</a>`;
+        const displayAbbr = getDisplayAbbr ? getDisplayAbbr(bookId, abbr) : abbr;
+        const label = `#${displayAbbr}${chapter} ${verse}`;
+        return `<a href="#" class="inline-verse-ref" data-book-id="${bookId}" data-chapter="${chapter}" data-verse="${verse}">${label}</a>`;
       }
       return match;
     });

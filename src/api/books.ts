@@ -3,8 +3,8 @@ import type { Book } from '@/utils/collectionReferences';
 const API_URL = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api';
 
 export async function getAllBooks(): Promise<Book[]> {
-  const cacheKey = 'rstne_books_cache';
-  const cacheTimeKey = 'rstne_books_cache_time';
+  const cacheKey = 'rstne_books_cache_v2';
+  const cacheTimeKey = 'rstne_books_cache_time_v2';
   const cached = sessionStorage.getItem(cacheKey);
   const cacheTime = sessionStorage.getItem(cacheTimeKey);
 

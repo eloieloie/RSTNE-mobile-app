@@ -9,7 +9,7 @@
       </button>
 
       <button class="nav-title-btn" @click="showChapterPicker = true">
-        <span class="nav-book-name">{{ currentBook?.book_name ?? '...' }}</span>
+        <span class="nav-book-name">{{ currentBook ? getBookName(currentBook) : '...' }}</span>
         <span v-if="selectedChapter" class="nav-chapter">Ch. {{ selectedChapter.chapter_number }}</span>
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="6 9 12 15 18 9"/>
@@ -37,7 +37,7 @@
 
       <div v-else>
         <div class="chapter-title">
-          {{ currentBook?.book_name }} {{ selectedChapter.chapter_number }}
+          {{ currentBook ? getBookName(currentBook) : '' }} {{ selectedChapter.chapter_number }}
         </div>
 
         <div
@@ -51,17 +51,17 @@
           <div class="verse-body">
             <!-- English on: num + english inline, telugu as block below -->
             <template v-if="settings.showEnglish">
-              <span class="verse-num">{{ verse.verse_index }}</span><span class="verse-text" :style="{ fontSize: settings.fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.verse, bookAbbreviations)"></span>
+              <span class="verse-num">{{ verse.verse_index }}</span><span class="verse-text" :style="{ fontSize: settings.fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.verse, bookAbbreviations, getDisplayAbbr)"></span>
               <span
                 v-if="settings.showTelugu && verse.telugu_verse"
                 class="verse-telugu"
                 :style="{ fontSize: settings.fontSize + 'px' }"
-                v-html="formatVerseWithPaleoBora(verse.telugu_verse, bookAbbreviations)"
+                v-html="formatVerseWithPaleoBora(verse.telugu_verse, bookAbbreviations, getDisplayAbbr)"
               ></span>
             </template>
             <!-- English off: num immediately adjacent to telugu (no comment nodes between) -->
             <template v-else>
-              <span v-if="settings.showTelugu && verse.telugu_verse" class="verse-telugu" :style="{ fontSize: settings.fontSize + 'px' }"><span class="verse-num">{{ verse.verse_index }}</span><span v-html="formatVerseWithPaleoBora(verse.telugu_verse, bookAbbreviations)"></span></span>
+              <span v-if="settings.showTelugu && verse.telugu_verse" class="verse-telugu" :style="{ fontSize: settings.fontSize + 'px' }"><span class="verse-num">{{ verse.verse_index }}</span><span v-html="formatVerseWithPaleoBora(verse.telugu_verse, bookAbbreviations, getDisplayAbbr)"></span></span>
               <span v-else class="verse-num">{{ verse.verse_index }}</span>
             </template>
 
@@ -74,8 +74,8 @@
                 :key="note.verse_note_id"
                 class="note-item"
               >
-                <div v-if="note.note_title" class="note-title" v-html="formatVerseWithPaleoBora(note.note_title, bookAbbreviations)"></div>
-                <div class="note-content" v-html="formatVerseWithPaleoBora(note.note_content, bookAbbreviations)"></div>
+                <div v-if="note.note_title" class="note-title" v-html="formatVerseWithPaleoBora(note.note_title, bookAbbreviations, getDisplayAbbr)"></div>
+                <div class="note-content" v-html="formatVerseWithPaleoBora(note.note_content, bookAbbreviations, getDisplayAbbr)"></div>
               </div>
             </div>
 
@@ -89,7 +89,7 @@
                 class="cross-ref-chip"
                 @click="openCrossRef(ref)"
               >
-                {{ ref.to_book_abbr || ref.to_book_name }} {{ ref.to_chapter }}:{{ ref.to_verse }}
+                {{ getCrossRefLabel(ref) }} {{ ref.to_chapter }}:{{ ref.to_verse }}
               </button>
               <button
                 v-if="!expandedCrossRefs.has(verse.verse_id) && verse.crossReferences.length > 3"
@@ -162,8 +162,8 @@
             </div>
             <div v-else>
               <p v-if="!crossRefSheet.verseText" class="cross-ref-empty">Verse not found.</p>
-              <p v-else class="cross-ref-verse" :style="{ fontSize: settings.fontSize + 'px' }" v-html="formatVerseWithPaleoBora(crossRefSheet.verseText, bookAbbreviations)"></p>
-              <p v-if="crossRefSheet.teluguVerseText && settings.showTelugu" class="cross-ref-verse cross-ref-telugu" :style="{ fontSize: settings.fontSize + 'px' }" v-html="formatVerseWithPaleoBora(crossRefSheet.teluguVerseText, bookAbbreviations)"></p>
+              <p v-else class="cross-ref-verse" :style="{ fontSize: settings.fontSize + 'px' }" v-html="formatVerseWithPaleoBora(crossRefSheet.verseText, bookAbbreviations, getDisplayAbbr)"></p>
+              <p v-if="crossRefSheet.teluguVerseText && settings.showTelugu" class="cross-ref-verse cross-ref-telugu" :style="{ fontSize: settings.fontSize + 'px' }" v-html="formatVerseWithPaleoBora(crossRefSheet.teluguVerseText, bookAbbreviations, getDisplayAbbr)"></p>
             </div>
           </div>
         </div>
@@ -196,7 +196,7 @@
       <div v-if="showVersePicker" class="sheet-backdrop" @click="showVersePicker = false">
         <div class="bottom-sheet" @click.stop>
           <div class="sheet-handle"></div>
-          <h3 class="sheet-title">{{ currentBook?.book_name }} {{ versePickerChapter?.chapter_number }} — Select Verse</h3>
+          <h3 class="sheet-title">{{ currentBook ? getBookName(currentBook) : '' }} {{ versePickerChapter?.chapter_number }} — Select Verse</h3>
           <div v-if="versePickerLoading" class="sheet-loading">
             <div class="spinner"></div>
           </div>
@@ -227,6 +227,7 @@ import type { VerseWithLinks } from '@/api/verses';
 import { getCrossReferences } from '@/api/crossReferences';
 import type { CrossReferenceData } from '@/api/crossReferences';
 import { useSettings } from '@/composables/useSettings';
+import { useBookLanguage } from '@/composables/useBookLanguage';
 import { formatVerseWithPaleoBora } from '@/utils/formatVerse';
 import { generateVerseCardImage, stripHtmlKeepPaleo } from '@/utils/paleoBora';
 import { Share } from '@capacitor/share';
@@ -235,6 +236,7 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 const route = useRoute();
 const router = useRouter();
 const settings = useSettings();
+const { getBookName, getBookAbbr } = useBookLanguage();
 
 // Wake lock
 let wakeLock: WakeLockSentinel | null = null;
@@ -286,6 +288,13 @@ const crossRefSheet = ref({
   targetVerseIndex: null as string | null,
 });
 
+const allBooks = ref<Book[]>([]);
+
+function getDisplayAbbr(bookId: number, originalAbbr: string): string {
+  const book = allBooks.value.find(b => b.book_id === bookId);
+  return book ? getBookAbbr(book) : originalAbbr;
+}
+
 const selectedVerseId = ref<number | null>(null);
 const copiedVerseId = ref<number | null>(null);
 
@@ -332,11 +341,21 @@ async function openVersePreview(
   }
 }
 
+function getCrossRefLabel(crossRef: CrossReferenceData): string {
+  if (crossRef.to_book_id) {
+    const book = allBooks.value.find(b => b.book_id === crossRef.to_book_id);
+    if (book) return getBookAbbr(book);
+  }
+  return crossRef.to_book_abbr || crossRef.to_book_name;
+}
+
 function openCrossRef(crossRef: CrossReferenceData) {
   if (!crossRef.to_book_id) return;
+  const book = allBooks.value.find(b => b.book_id === crossRef.to_book_id);
+  const bookLabel = book ? getBookName(book) : crossRef.to_book_name;
   openVersePreview(
     crossRef.to_book_id,
-    crossRef.to_book_name,
+    bookLabel,
     String(crossRef.to_chapter),
     String(crossRef.to_verse),
     crossRef.target_chapter_id,
@@ -534,7 +553,7 @@ function selectVerse(verseId: number) {
 
 async function shareVerse(verse: VerseWithLinks) {
   if (!selectedChapter.value || !currentBook.value) return;
-  const reference = `${currentBook.value.book_name} ${selectedChapter.value.chapter_number}:${verse.verse_index}`;
+  const reference = `${getBookName(currentBook.value)} ${selectedChapter.value.chapter_number}:${verse.verse_index}`;
   const bookSlug = currentBook.value.book_name.toLowerCase().replace(/\s+/g, '-');
   const verseUrl = `https://eat-rstne-26.web.app/${bookSlug}/${selectedChapter.value.chapter_number}/${verse.verse_index}`;
   selectedVerseId.value = null;
@@ -570,8 +589,13 @@ onMounted(async () => {
 
   // Build book abbreviation map in background (cached, won't block)
   getAllBooks().then(books => {
+    allBooks.value = books;
     const map: Record<string, number> = {};
-    books.forEach(b => { if (b.book_abbr) map[b.book_abbr.toLowerCase()] = b.book_id; });
+    books.forEach(b => {
+      if (b.book_abbr) map[b.book_abbr.toLowerCase()] = b.book_id;
+      if (b.hebrew_book_abbr) map[b.hebrew_book_abbr.toLowerCase()] = b.book_id;
+      if (b.telugu_book_abbr) map[b.telugu_book_abbr.toLowerCase()] = b.book_id;
+    });
     bookAbbreviations.value = map;
   }).catch(() => {});
 

@@ -1,8 +1,20 @@
 <template>
   <div class="books-view">
     <header class="page-header">
-      <h1>EAT RSTNE 26</h1>
-      <p>Restoration Scriptures True Name Edition in English and Telugu</p>
+      <div class="header-top">
+        <div class="header-text">
+          <h1>EAT RSTNE 26</h1>
+          <p>Restoration Scriptures True Name Edition in English and Telugu</p>
+        </div>
+        <div class="lang-selector">
+          <button
+            v-for="opt in langOptions"
+            :key="opt.value"
+            :class="['lang-btn', { active: bookNameLanguage === opt.value }]"
+            @click="bookNameLanguage = opt.value"
+          >{{ opt.label }}</button>
+        </div>
+      </div>
     </header>
 
     <div v-if="loading" class="state-container">
@@ -21,7 +33,7 @@
             class="book-card first-covenant-card"
             @click="selectBook(book)"
           >
-            <span class="book-name">{{ book.book_name }}</span>
+            <span class="book-name">{{ getBookName(book) }}</span>
             <span class="chapter-count">{{ book.chapter_count ?? 0 }} ch.</span>
           </button>
         </div>
@@ -36,7 +48,7 @@
             class="book-card new-covenant-card"
             @click="selectBook(book)"
           >
-            <span class="book-name">{{ book.book_name }}</span>
+            <span class="book-name">{{ getBookName(book) }}</span>
             <span class="chapter-count">{{ book.chapter_count ?? 0 }} ch.</span>
           </button>
         </div>
@@ -51,7 +63,7 @@
             class="book-card apocryphal-card"
             @click="selectBook(book)"
           >
-            <span class="book-name">{{ book.book_name }}</span>
+            <span class="book-name">{{ getBookName(book) }}</span>
             <span class="chapter-count">{{ book.chapter_count ?? 0 }} ch.</span>
           </button>
         </div>
@@ -63,7 +75,7 @@
       <div v-if="showChapterPicker" class="sheet-backdrop" @click="showChapterPicker = false">
         <div class="bottom-sheet" @click.stop>
           <div class="sheet-handle"></div>
-          <h3 class="sheet-title">{{ pickerBook?.book_name }} — Select Chapter</h3>
+          <h3 class="sheet-title">{{ pickerBook ? getBookName(pickerBook) : '' }} — Select Chapter</h3>
           <div v-if="chaptersLoading" class="sheet-loading">
             <div class="spinner"></div>
           </div>
@@ -86,7 +98,7 @@
       <div v-if="showVersePicker" class="sheet-backdrop" @click="showVersePicker = false">
         <div class="bottom-sheet" @click.stop>
           <div class="sheet-handle"></div>
-          <h3 class="sheet-title">{{ pickerBook?.book_name }} {{ pickerChapter?.chapter_number }} — Select Verse</h3>
+          <h3 class="sheet-title">{{ pickerBook ? getBookName(pickerBook) : '' }} {{ pickerChapter?.chapter_number }} — Select Verse</h3>
           <div v-if="versesLoading" class="sheet-loading">
             <div class="spinner"></div>
           </div>
@@ -113,11 +125,20 @@ import { getAllBooks } from '@/api/books';
 import { getChaptersByBookId } from '@/api/chapters';
 import { getVersesByChapterId } from '@/api/verses';
 import type { Book, Chapter } from '@/utils/collectionReferences';
+import { useBookLanguage, type BookNameLanguage } from '@/composables/useBookLanguage';
 
 const router = useRouter();
 const books = ref<Book[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+
+const { bookNameLanguage, getBookName } = useBookLanguage();
+
+const langOptions: { value: BookNameLanguage; label: string }[] = [
+  { value: 'english', label: 'EN' },
+  { value: 'hebrew', label: 'HE' },
+  { value: 'telugu', label: 'TE' },
+];
 
 // Pickers state
 const showChapterPicker = ref(false);
@@ -211,22 +232,63 @@ onMounted(async () => {
 }
 
 .page-header {
-  padding: 16px 16px 8px;
+  padding: 12px 16px 10px;
   background: #fff;
   border-bottom: 1px solid #e5e7eb;
   flex-shrink: 0;
 }
 
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.header-text {
+  flex: 1;
+  min-width: 0;
+}
+
 .page-header h1 {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   color: #1a1a2e;
 }
 
 .page-header p {
-  font-size: 12px;
+  font-size: 11px;
   color: #6b7280;
   margin-top: 2px;
+}
+
+.lang-selector {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.lang-btn {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1.5px solid #d1d5db;
+  background: #f5f5f5;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #6b7280;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 32px;
+}
+
+.lang-btn:active {
+  opacity: 0.7;
+}
+
+.lang-btn.active {
+  background: #1a1a2e;
+  border-color: #1a1a2e;
+  color: #fff;
 }
 
 .books-scroll {
