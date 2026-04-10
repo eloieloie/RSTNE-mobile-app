@@ -90,13 +90,13 @@
               <button
                 class="font-btn"
                 :disabled="settings.fontSize <= 12"
-                @click="settings.fontSize -= 2"
+                @click="settings.fontSize -= 1"
               >A−</button>
               <span class="font-size-label">{{ settings.fontSize }}px</span>
               <button
                 class="font-btn"
                 :disabled="settings.fontSize >= 26"
-                @click="settings.fontSize += 2"
+                @click="settings.fontSize += 1"
               >A+</button>
             </div>
           </div>
