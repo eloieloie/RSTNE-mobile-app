@@ -1,4 +1,4 @@
-const API_URL = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api';
+const API_URL = 'https://rstne.eloi.in/api';
 
 export interface CrossReferenceData {
   cross_ref_id: number;
@@ -30,5 +30,11 @@ export async function getCrossReferences(
   const url = `${API_URL}/cross-references?bookId=${bookId}&chapter=${encodeURIComponent(chapter)}&verse=${encodeURIComponent(verse)}`;
   const response = await fetch(url);
   if (!response.ok) throw new Error('Failed to fetch cross references');
+  return response.json();
+}
+
+export async function getChapterVersesWithCrossRefs(chapterId: number): Promise<any[]> {
+  const response = await fetch(`${API_URL}/chapters/${chapterId}/verses-with-cross-refs`);
+  if (!response.ok) throw new Error('Failed to fetch verses with cross-references');
   return response.json();
 }

@@ -224,7 +224,7 @@ import { getChaptersByBookId } from '@/api/chapters';
 import { getVersesByChapterId } from '@/api/verses';
 import type { Book, Chapter } from '@/utils/collectionReferences';
 import type { VerseWithLinks } from '@/api/verses';
-import { getCrossReferences } from '@/api/crossReferences';
+import { getChapterVersesWithCrossRefs } from '@/api/crossReferences';
 import type { CrossReferenceData } from '@/api/crossReferences';
 import { useSettings } from '@/composables/useSettings';
 import { useBookLanguage } from '@/composables/useBookLanguage';
@@ -433,24 +433,22 @@ const nextChapter = computed(() =>
     : null,
 );
 
-async function loadVerses(chapter: Chapter, deferCrossRefs = false) {
+async function loadVerses(chapter: Chapter) {
   selectedChapter.value = chapter;
   selectedVerseId.value = null;
   verses.value = [];
   try {
-    verses.value = await getVersesByChapterId(chapter.chapter_id);
+    verses.value = await getChapterVersesWithCrossRefs(chapter.chapter_id);
   } catch {
     // verses stay empty
   }
   versesEl.value?.scrollTo({ top: 0 });
-  if (!deferCrossRefs) loadCrossReferences(chapter);
 }
 
 async function applyPendingScroll(chapter?: Chapter) {
   console.log('[applyPendingScroll] called, pendingScrollToVerse:', pendingScrollToVerse.value, 'chapter:', chapter?.chapter_id);
   if (!pendingScrollToVerse.value) {
     console.log('[applyPendingScroll] no pending verse — skipping scroll');
-    if (chapter) loadCrossReferences(chapter);
     return;
   }
   const verseIdx = pendingScrollToVerse.value;
@@ -478,29 +476,7 @@ async function applyPendingScroll(chapter?: Chapter) {
   } finally {
     scrollPending.value = false;
     // Start cross-ref loading only after scroll is settled
-    if (chapter) loadCrossReferences(chapter);
   }
-}
-
-async function loadCrossReferences(chapter: Chapter) {
-  if (!currentBook.value) return;
-  const bookId = currentBook.value.book_id;
-  const chapterNum = chapter.chapter_number;
-  const snapshot = verses.value;
-  await Promise.all(
-    snapshot.map(async (verse, i) => {
-      if (!verse.verse_index) return;
-      try {
-        const refs = await getCrossReferences(bookId, chapterNum, String(verse.verse_index));
-        // Mutate reactively only if still on the same chapter
-        if (verses.value === snapshot) {
-          verses.value[i] = { ...verses.value[i], crossReferences: refs };
-        }
-      } catch {
-        // skip failed verse
-      }
-    }),
-  );
 }
 
 function navigateToChapter(id: number) {
@@ -615,7 +591,7 @@ onMounted(async () => {
     if (target) {
       loadedChapter = target;
       const verseParam = route.query.verse ? String(route.query.verse) : null;
-      await loadVerses(target, !!verseParam);
+      await loadVerses(target);
       if (verseParam) pendingScrollToVerse.value = verseParam;
     }
   } catch (e) {
@@ -664,7 +640,7 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
         loadedChapter = target;
         const verseParam = route.query.verse ? String(route.query.verse) : null;
         if (verseParam) pendingScrollToVerse.value = verseParam;
-        await loadVerses(target, !!(verseParam || pendingScrollToVerse.value));
+        await loadVerses(target);
       }
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to load book';
@@ -678,7 +654,7 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
     if (ch) {
       const verseParam = route.query.verse ? String(route.query.verse) : null;
       if (verseParam) pendingScrollToVerse.value = verseParam;
-      await loadVerses(ch, !!(verseParam || pendingScrollToVerse.value));
+      await loadVerses(ch);
       await applyPendingScroll(ch);
     }
   }

@@ -1,4 +1,4 @@
-const API_URL = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api';
+const API_URL = 'https://rstne.eloi.in/api';
 
 export interface AppVersionInfo {
   min_version: string;
