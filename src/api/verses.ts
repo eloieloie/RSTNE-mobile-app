@@ -1,7 +1,6 @@
 import type { Verse } from '@/utils/collectionReferences';
 import type { CrossReferenceData } from '@/api/crossReferences';
-
-const API_URL = 'https://rstne.eloi.in/api';
+import { API_URL, API_HEADERS } from './client';
 
 export interface VerseNote {
   verse_note_id: number;
@@ -36,13 +35,13 @@ export interface VerseSearchResult extends VerseWithLinks {
 }
 
 export async function getVersesByChapterId(chapterId: number): Promise<VerseWithLinks[]> {
-  const response = await fetch(`${API_URL}/chapters/${chapterId}/verses`);
+  const response = await fetch(`${API_URL}/chapters/${chapterId}/verses`, { headers: API_HEADERS });
   if (!response.ok) throw new Error('Failed to fetch verses');
   return response.json();
 }
 
 export async function searchVersesByText(searchText: string): Promise<VerseSearchResult[]> {
-  const response = await fetch(`${API_URL}/verses/text-search?q=${encodeURIComponent(searchText)}`);
+  const response = await fetch(`${API_URL}/verses/text-search?q=${encodeURIComponent(searchText)}`, { headers: API_HEADERS });
   if (!response.ok) throw new Error('Failed to search verses');
   const data = await response.json();
   return data.results ?? [];

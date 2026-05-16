@@ -1,6 +1,5 @@
 import type { Book } from '@/utils/collectionReferences';
-
-const API_URL = 'https://rstne.eloi.in/api';
+import { API_URL, API_HEADERS } from './client';
 
 export async function getAllBooks(): Promise<Book[]> {
   const cacheKey = 'rstne_books_cache_v2';
@@ -15,7 +14,7 @@ export async function getAllBooks(): Promise<Book[]> {
     }
   }
 
-  const response = await fetch(`${API_URL}/books`);
+  const response = await fetch(`${API_URL}/books`, { headers: API_HEADERS });
   if (!response.ok) throw new Error('Failed to fetch books');
   const data = await response.json();
 
@@ -26,7 +25,7 @@ export async function getAllBooks(): Promise<Book[]> {
 }
 
 export async function getBookById(bookId: number): Promise<Book | null> {
-  const response = await fetch(`${API_URL}/books/${bookId}`);
+  const response = await fetch(`${API_URL}/books/${bookId}`, { headers: API_HEADERS });
   if (!response.ok) return null;
   return response.json();
 }

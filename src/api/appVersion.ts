@@ -1,4 +1,4 @@
-const API_URL = 'https://rstne.eloi.in/api';
+import { API_URL, API_HEADERS } from './client';
 
 export interface AppVersionInfo {
   min_version: string;
@@ -6,7 +6,7 @@ export interface AppVersionInfo {
 }
 
 export async function getAppVersion(): Promise<AppVersionInfo> {
-  const response = await fetch(`${API_URL}/app-version`);
+  const response = await fetch(`${API_URL}/app-version`, { headers: API_HEADERS });
   if (!response.ok) throw new Error('Failed to fetch app version');
   return response.json();
 }
