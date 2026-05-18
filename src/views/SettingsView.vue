@@ -140,6 +140,7 @@ const langOptions: { value: BookNameLanguage; label: string }[] = [
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
   background: #f3f4f6;
   overflow: hidden;
 }
@@ -160,6 +161,7 @@ const langOptions: { value: BookNameLanguage; label: string }[] = [
 
 .settings-body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 20px 16px;
