@@ -46,11 +46,11 @@
         <div class="readings">
           <div class="reading torah">
             <span class="reading-label">Turah</span>
-            <span class="reading-text">{{ parasha.torah.displayText }}</span>
+            <span class="reading-text">{{ getLocalizedReadingText(parasha.torah) }}</span>
           </div>
           <div class="reading nc">
             <span class="reading-label">Brit Chadasha</span>
-            <span class="reading-text">{{ parasha.newCovenant.displayText }}</span>
+            <span class="reading-text">{{ getLocalizedReadingText(parasha.newCovenant) }}</span>
           </div>
         </div>
         <div class="card-btns">
@@ -93,11 +93,11 @@
           <div class="readings">
             <div class="reading torah">
               <span class="reading-label">Turah</span>
-              <span class="reading-text">{{ parasha.torah.displayText }}</span>
+              <span class="reading-text">{{ getLocalizedReadingText(parasha.torah) }}</span>
             </div>
             <div class="reading nc">
               <span class="reading-label">Brit Chadasha</span>
-              <span class="reading-text">{{ parasha.newCovenant.displayText }}</span>
+              <span class="reading-text">{{ getLocalizedReadingText(parasha.newCovenant) }}</span>
             </div>
           </div>
           <div class="card-btns">
@@ -144,7 +144,7 @@
               @click="navigateRef(ref)"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-              {{ ref.label }}
+              {{ getLocalizedHaftarahLabel(ref) }}
             </button>
           </div>
         </div>
@@ -160,9 +160,10 @@ import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { getAllBooks } from '@/api/books';
 import { getChaptersByBookId } from '@/api/chapters';
-import { WEEKLY_PARASHOT, DSS_MONTH_NAMES, type Parasha } from '@/data/weeklyParashot';
+import { WEEKLY_PARASHOT, DSS_MONTH_NAMES, type Parasha, type ParashaReading } from '@/data/weeklyParashot';
 import { generateReadingPlanCardImage } from '@/utils/paleoBora';
 import type { Book, Chapter } from '@/utils/collectionReferences';
+import { useBookLanguage } from '@/composables/useBookLanguage';
 
 const router = useRouter();
 const activeTab = ref<'weekly' | 'byMonth' | 'roshChodesh'>('weekly');
@@ -171,12 +172,30 @@ const navLoading = ref(false);
 const shareLoading = ref(false);
 const expandedRCMonth = ref<number | null>(null);
 
+const { getBookName } = useBookLanguage();
+
 // ── Navigation helpers ──────────────────────────────────────────────────────
 const booksCache = ref<Book[]>([]);
 const chaptersCache = new Map<number, Chapter[]>();
 
 function toSlug(name: string): string {
   return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+}
+
+function getLocalizedReadingText(reading: ParashaReading): string {
+  const book = booksCache.value.find(b => toSlug(b.book_name) === reading.bookSlug);
+  if (!book) return reading.displayText;
+  const chapterPart = reading.displayText.slice(book.book_name.length).trim();
+  return `${getBookName(book)} ${chapterPart}`;
+}
+
+function getLocalizedHaftarahLabel(ref: HaftarahRef): string {
+  const book = booksCache.value.find(b => toSlug(b.book_name) === ref.bookSlug);
+  if (!book) return ref.label;
+  const idx = ref.label.toLowerCase().indexOf(book.book_name.toLowerCase());
+  if (idx === -1) return ref.label;
+  const chapterPart = ref.label.slice(idx + book.book_name.length).trim();
+  return `${getBookName(book)} ${chapterPart}`;
 }
 
 async function navigateBySlug(bookSlug: string, chapterNum: number) {
@@ -666,6 +685,7 @@ onMounted(() => {
 
 /* Month section */
 .month-section {
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -714,6 +734,7 @@ onMounted(() => {
 
 /* Rosh Chodesh accordion */
 .rc-intro {
+  flex-shrink: 0;
   text-align: center;
   font-size: 12px;
   font-weight: 700;
@@ -727,6 +748,7 @@ onMounted(() => {
 .rc-list {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   gap: 0;
   background: #fff;
   border: 1.5px solid #e5e7eb;

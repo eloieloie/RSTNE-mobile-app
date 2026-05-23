@@ -1,14 +1,18 @@
 import { PushNotifications } from '@capacitor/push-notifications'
+import { Capacitor } from '@capacitor/core'
+import { App } from '@capacitor/app'
 import type { Router } from 'vue-router'
 
 const API_BASE = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api'
 
 async function saveTokenToBackend(token: string): Promise<void> {
   try {
+    const platform = Capacitor.getPlatform() as 'ios' | 'android' | 'web'
+    const { version: app_version } = await App.getInfo()
     await fetch(`${API_BASE}/fcm-token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
+      body: JSON.stringify({ token, platform, app_version }),
     })
   } catch {
     // Non-fatal — token will be re-sent on next launch

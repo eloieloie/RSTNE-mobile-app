@@ -333,7 +333,7 @@ function feastsBySeason(seasonId: string): Feast[] {
   gap: 20px;
 }
 
-.season-section { display: flex; flex-direction: column; gap: 10px; }
+.season-section { flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; }
 
 .season-header {
   display: flex;

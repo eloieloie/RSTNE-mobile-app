@@ -117,6 +117,8 @@
           </div>
         </div>
       </section>
+
+      <p class="app-version">Version {{ APP_VERSION }}</p>
     </div>
   </div>
 </template>
@@ -124,6 +126,8 @@
 <script setup lang="ts">
 import { useSettings } from '@/composables/useSettings';
 import { useBookLanguage, type BookNameLanguage } from '@/composables/useBookLanguage';
+
+const APP_VERSION = '12.1.0';
 
 const settings = useSettings();
 const { bookNameLanguage } = useBookLanguage();
@@ -171,6 +175,7 @@ const langOptions: { value: BookNameLanguage; label: string }[] = [
 }
 
 .settings-section {
+  flex-shrink: 0;
   background: #fff;
   border-radius: 14px;
   overflow: hidden;
@@ -336,5 +341,13 @@ const langOptions: { value: BookNameLanguage; label: string }[] = [
   background: #1E40AF;
   border-color: #1E40AF;
   color: #fff;
+}
+
+.app-version {
+  text-align: center;
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 0;
+  padding-bottom: 8px;
 }
 </style>

@@ -74,7 +74,7 @@ import { getAppVersion, compareSemver } from '@/api/appVersion';
 import { Capacitor } from '@capacitor/core';
 import { initPushNotifications } from '@/composables/usePushNotifications';
 
-const APP_VERSION = '11.1.0';
+const APP_VERSION = '12.1.0';
 
 const route = useRoute();
 const router = useRouter();
