@@ -29,7 +29,16 @@
       <div class="spinner"></div>
     </div>
 
-    <div v-else-if="error" class="state-overlay error-text">{{ error }}</div>
+    <div v-else-if="error" class="state-overlay error-state">
+      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <p class="error-title">Failed to load</p>
+      <p class="error-desc">Check your network connection and try again.</p>
+      <button class="retry-btn" @click="retryLoad">Tap to retry</button>
+    </div>
 
     <!-- Verses — always keep mounted once loaded so versesEl ref stays valid during scrollPending -->
     <main v-else class="verses-scroll" ref="versesEl">
@@ -558,6 +567,33 @@ async function shareVerse(verse: VerseWithLinks) {
   }
 }
 
+async function retryLoad() {
+  loading.value = true;
+  error.value = null;
+  let loadedChapter: Chapter | undefined;
+  try {
+    const [book, chaps] = await Promise.all([
+      getBookById(bookId.value),
+      getChaptersByBookId(bookId.value),
+    ]);
+    currentBook.value = book;
+    chapters.value = chaps;
+    const sorted = [...chaps].sort((a, b) => parseInt(a.chapter_number) - parseInt(b.chapter_number));
+    const target = chapterId.value ? chaps.find(c => c.chapter_id === chapterId.value) : sorted[0];
+    if (target) {
+      loadedChapter = target;
+      const verseParam = route.query.verse ? String(route.query.verse) : null;
+      await loadVerses(target);
+      if (verseParam) pendingScrollToVerse.value = verseParam;
+    }
+  } catch {
+    error.value = 'failed';
+  } finally {
+    loading.value = false;
+  }
+  await applyPendingScroll(loadedChapter);
+}
+
 onMounted(async () => {
   if (settings.keepScreenOn) acquireWakeLock();
   document.addEventListener('visibilitychange', onVisibilityChange);
@@ -709,6 +745,40 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
 .nav-chapter {
   font-size: 13px;
   color: #6b7280;
+}
+
+.error-state {
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+}
+
+.error-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #dc2626;
+  margin: 4px 0 0;
+}
+
+.error-desc {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.retry-btn {
+  margin-top: 8px;
+  padding: 10px 28px;
+  background: #1E40AF;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .state-overlay {

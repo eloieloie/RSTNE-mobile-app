@@ -33,7 +33,16 @@
       <div class="spinner"></div>
     </div>
 
-    <div v-else-if="error" class="state-container error-text">{{ error }}</div>
+    <div v-else-if="error" class="state-container error-state">
+      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <p class="error-title">Failed to load books</p>
+      <p class="error-desc">Check your network connection and try again.</p>
+      <button class="retry-btn" @click="loadBooks">Tap to retry</button>
+    </div>
 
     <div v-else class="books-scroll">
       <section v-if="firstCovenantBooks.length" class="category-section">
@@ -224,15 +233,19 @@ function navigateToVerse(verseIndex: string) {
   });
 }
 
-onMounted(async () => {
+async function loadBooks() {
+  loading.value = true;
+  error.value = null;
   try {
     books.value = await getAllBooks();
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to load books';
+  } catch {
+    error.value = 'failed';
   } finally {
     loading.value = false;
   }
-});
+}
+
+onMounted(loadBooks);
 </script>
 
 <style scoped>
@@ -370,11 +383,38 @@ onMounted(async () => {
   to { transform: rotate(360deg); }
 }
 
-.error-text {
-  color: #dc2626;
-  font-size: 14px;
-  padding: 16px;
+.error-state {
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px;
   text-align: center;
+}
+
+.error-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #dc2626;
+  margin: 4px 0 0;
+}
+
+.error-desc {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.retry-btn {
+  margin-top: 8px;
+  padding: 10px 28px;
+  background: #1E40AF;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .category-section {

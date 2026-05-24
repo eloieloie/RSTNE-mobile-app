@@ -30,8 +30,15 @@
       <div class="spinner"></div>
     </div>
 
-    <div v-else-if="state.error" class="state-container empty-text error-text">
-      {{ state.error }}
+    <div v-else-if="state.error" class="state-container error-state">
+      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <p class="error-title">Search failed</p>
+      <p class="error-desc">Check your network connection and try again.</p>
+      <button class="retry-btn" @click="search">Tap to retry</button>
     </div>
 
     <div v-else-if="state.searched && state.results.length === 0" class="state-container empty-text">
@@ -205,8 +212,38 @@ input::placeholder {
   to { transform: rotate(360deg); }
 }
 
-.error-text {
+.error-state {
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+}
+
+.error-title {
+  font-size: 16px;
+  font-weight: 600;
   color: #dc2626;
+  margin: 4px 0 0;
+}
+
+.error-desc {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.retry-btn {
+  margin-top: 8px;
+  padding: 10px 28px;
+  background: #1E40AF;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .empty-text,
