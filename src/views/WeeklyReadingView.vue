@@ -263,7 +263,20 @@ async function shareParasha(parasha: Parasha) {
 }
 
 // ── DSS Calendar ────────────────────────────────────────────────────────────
+// Structure: 4 quarters × 91 days = 364 days
+// Months 3, 6, 9, 12 have 31 days (Tekufah/seasonal day); all others have 30 days
 const DSS_YEAR_OFFSET = 3925;
+
+function getDSSMonthLength(month: number): number {
+  return month % 3 === 0 ? 31 : 30;
+}
+
+// Returns day-of-year (1-based) on which the given DSS month starts
+function getDSSMonthStart(month: number): number {
+  let d = 1;
+  for (let m = 1; m < month; m++) d += getDSSMonthLength(m);
+  return d;
+}
 
 function getDSSYearStart(gregorianYear: number): Date {
   const equinox = new Date(gregorianYear, 2, 20);
@@ -287,12 +300,14 @@ function getDSSDate(date: Date): { month: number; day: number; dayOfYear: number
     const ys2 = getDSSYearStart(date.getFullYear() + 1);
     if (utcDay(date) >= utcDay(ys2)) {
       const d2 = Math.floor((utcDay(date) - utcDay(ys2)) / 86400000) + 1;
-      const m2 = Math.min(12, Math.ceil(d2 / 30));
-      return { month: m2, day: Math.min(30, d2 - (m2 - 1) * 30), dayOfYear: d2 };
+      let m2 = 1;
+      while (m2 < 12 && getDSSMonthStart(m2 + 1) <= d2) m2++;
+      return { month: m2, day: d2 - getDSSMonthStart(m2) + 1, dayOfYear: d2 };
     }
   }
-  const month = Math.min(12, Math.ceil(dayOfYear / 30));
-  const day = Math.min(30, dayOfYear - (month - 1) * 30);
+  let month = 1;
+  while (month < 12 && getDSSMonthStart(month + 1) <= dayOfYear) month++;
+  const day = dayOfYear - getDSSMonthStart(month) + 1;
   return { month, day, dayOfYear };
 }
 
@@ -324,10 +339,10 @@ const currentDSSYear = currentDSSYearStart.getFullYear() + DSS_YEAR_OFFSET;
 const currentJubileeRef = getJubileeRef(currentDSSYear);
 
 function getCurrentWeek(): number {
-  const todayDay = (dssToday.month - 1) * 30 + dssToday.day;
+  const todayDay = dssToday.dayOfYear;
   let week = 1;
   for (const p of WEEKLY_PARASHOT) {
-    if ((p.dssMonth - 1) * 30 + p.dssDay <= todayDay) week = p.week;
+    if (getDSSMonthStart(p.dssMonth) + p.dssDay - 1 <= todayDay) week = p.week;
     else break;
   }
   return week;
