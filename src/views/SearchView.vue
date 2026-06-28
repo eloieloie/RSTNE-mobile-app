@@ -7,7 +7,6 @@
           <path d="m21 21-4.35-4.35"/>
         </svg>
         <input
-          ref="inputEl"
           v-model="state.query"
           type="text"
           placeholder="Search scriptures..."
@@ -56,6 +55,10 @@
         <div class="result-ref">{{ result.book_name }} {{ result.chapter_number }}:{{ result.verse_index }}</div>
         <div class="result-text" v-html="formattedResult(result.verse)"></div>
         <div v-if="result.telugu_verse" class="result-telugu" v-html="formattedResult(result.telugu_verse)"></div>
+        <div v-if="result.note_content" class="result-note">
+          <span class="result-note-label">Note</span>
+          <span v-html="formattedResult(result.note_content)"></span>
+        </div>
       </div>
     </div>
 
@@ -66,14 +69,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { searchVersesByText } from '@/api/verses';
+import { searchVersesByText, type VerseSearchResult } from '@/api/verses';
 import { formatVerseWithPaleoBora } from '@/utils/formatVerse';
 import { searchState as state } from '@/composables/useSearchState';
 
 const router = useRouter();
-const inputEl = ref<HTMLInputElement | null>(null);
 
 function escapeRegex(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -115,9 +116,13 @@ function clear() {
   state.searched = false;
   state.error = '';
   state.lastQuery = '';
+  state.navResults = [];
+  state.navCurrentIndex = -1;
 }
 
 function openVerse(result: VerseSearchResult) {
+  state.navResults = [...state.results];
+  state.navCurrentIndex = state.results.findIndex(r => r.verse_id === result.verse_id);
   router.push({
     name: 'reading',
     params: { bookId: result.book_id, chapterId: result.chapter_id },
@@ -302,6 +307,30 @@ input::placeholder {
   margin-top: 4px;
   padding-top: 4px;
   border-top: 1px solid #f3f4f6;
+}
+
+.result-note {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.5;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.result-note-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: #6B21A8;
+  padding: 1px 6px;
+  border-radius: 6px;
+  flex-shrink: 0;
 }
 
 :deep(mark) {

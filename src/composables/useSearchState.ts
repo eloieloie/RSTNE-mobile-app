@@ -9,4 +9,7 @@ export const searchState = reactive({
   searched: false,
   lastQuery: '',
   error: '',
+  // Search navigation bar state (active when reading a search result)
+  navResults: [] as VerseSearchResult[],
+  navCurrentIndex: -1,
 });

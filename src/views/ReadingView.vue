@@ -24,6 +24,29 @@
       </button>
     </header>
 
+    <!-- Search results navigation bar -->
+    <div v-if="hasSearchNav" class="search-nav-bar">
+      <button class="search-nav-clear" @click="clearSearchNav">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      <span class="search-nav-text">{{ searchNavText }}</span>
+      <div class="search-nav-btns">
+        <button class="search-nav-btn" @click="navToPrev">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        <button class="search-nav-btn" @click="navToNext">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+    </div>
+
     <!-- Loading -->
     <div v-if="loading" class="state-overlay">
       <div class="spinner"></div>
@@ -237,6 +260,7 @@ import { getChapterVersesWithCrossRefs } from '@/api/crossReferences';
 import type { CrossReferenceData } from '@/api/crossReferences';
 import { useSettings } from '@/composables/useSettings';
 import { useBookLanguage } from '@/composables/useBookLanguage';
+import { searchState } from '@/composables/useSearchState';
 import { formatVerseWithPaleoBora } from '@/utils/formatVerse';
 import { generateVerseCardImage, stripHtmlKeepPaleo } from '@/utils/paleoBora';
 import { Share } from '@capacitor/share';
@@ -312,6 +336,42 @@ const highlightedVerseIndex = ref<string | null>(null);
 const scrollPending = ref(false);
 const expandedCrossRefs = ref(new Set<number>());
 const bookAbbreviations = ref<Record<string, number>>({});
+
+// Search navigation bar
+const hasSearchNav = computed(() => searchState.navResults.length > 0);
+const searchNavText = computed(() => {
+  if (!hasSearchNav.value || searchState.navCurrentIndex < 0) return '';
+  return `${searchState.navCurrentIndex + 1} of ${searchState.navResults.length}`;
+});
+
+function clearSearchNav() {
+  searchState.navResults = [];
+  searchState.navCurrentIndex = -1;
+}
+
+function navToNext() {
+  if (!searchState.navResults.length) return;
+  const len = searchState.navResults.length;
+  searchState.navCurrentIndex = (searchState.navCurrentIndex + 1) % len;
+  const result = searchState.navResults[searchState.navCurrentIndex];
+  router.replace({
+    name: 'reading',
+    params: { bookId: result.book_id, chapterId: result.chapter_id },
+    query: { verse: result.verse_index != null ? String(result.verse_index) : undefined },
+  });
+}
+
+function navToPrev() {
+  if (!searchState.navResults.length) return;
+  const len = searchState.navResults.length;
+  searchState.navCurrentIndex = (searchState.navCurrentIndex - 1 + len) % len;
+  const result = searchState.navResults[searchState.navCurrentIndex];
+  router.replace({
+    name: 'reading',
+    params: { bookId: result.book_id, chapterId: result.chapter_id },
+    query: { verse: result.verse_index != null ? String(result.verse_index) : undefined },
+  });
+}
 
 // Shared helper: open the preview sheet for any book/chapter/verse
 async function openVersePreview(
@@ -715,6 +775,85 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   background: #fff;
   border-bottom: 1px solid #e5e7eb;
   flex-shrink: 0;
+}
+
+.search-nav-bar {
+  position: fixed;
+  bottom: calc(var(--nav-height) + var(--safe-area-bottom) + 16px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+  z-index: 50;
+  animation: searchNavSlideUp 0.3s ease-out;
+  white-space: nowrap;
+}
+
+@keyframes searchNavSlideUp {
+  from {
+    transform: translateX(-50%) translateY(80px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+.search-nav-clear {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 36px;
+  min-width: 36px;
+  flex-shrink: 0;
+}
+
+.search-nav-clear:active {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.search-nav-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  min-width: 60px;
+  text-align: center;
+}
+
+.search-nav-btns {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.search-nav-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 36px;
+  min-width: 36px;
+}
+
+.search-nav-btn:active {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(0.95);
 }
 
 .back-btn,

@@ -32,6 +32,7 @@ export interface VerseSearchResult extends VerseWithLinks {
   book_id: number;
   chapter_id: number;
   chapter_number: string;
+  note_content?: string | null;
 }
 
 export async function getVersesByChapterId(chapterId: number): Promise<VerseWithLinks[]> {

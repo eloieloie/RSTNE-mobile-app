@@ -127,7 +127,7 @@
 import { useSettings } from '@/composables/useSettings';
 import { useBookLanguage, type BookNameLanguage } from '@/composables/useBookLanguage';
 
-const APP_VERSION = '12.1.0';
+const APP_VERSION = '13.1.0';
 
 const settings = useSettings();
 const { bookNameLanguage } = useBookLanguage();
