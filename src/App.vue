@@ -26,6 +26,28 @@
       </div>
     </div>
 
+    <!-- Connection issue modal: API unreachable while internet is up -->
+    <div v-if="showConnectionIssueModal" class="update-overlay" @click.self="showConnectionIssueModal = false">
+      <div class="update-modal">
+        <div class="update-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <h2>Unable to Connect</h2>
+        <p>RSTNE couldn't reach the server, but your internet connection looks fine. Please make sure you're on the latest version of the app.</p>
+        <a
+          href="https://play.google.com/store/apps/details?id=com.rstne.app"
+          target="_blank"
+          rel="noopener"
+          class="update-btn"
+        >Check for Update</a>
+        <button class="dismiss-btn" @click="showConnectionIssueModal = false">Dismiss</button>
+      </div>
+    </div>
+
     <nav class="bottom-nav">
       <RouterLink to="/" class="tab-item" :class="{ active: route.name === 'books' }">
         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -80,6 +102,7 @@ const route = useRoute();
 const router = useRouter();
 const lastReadingRoute = ref<string | null>(null);
 const showUpdateModal = ref(false);
+const showConnectionIssueModal = ref(false);
 
 watch(
   () => route.fullPath,
@@ -97,7 +120,11 @@ onMounted(async () => {
       showUpdateModal.value = true;
     }
   } catch {
-    // If version check fails, allow the app to continue normally
+    // API unreachable. If the device does have internet, the endpoint itself
+    // is likely the problem — most likely fixed by updating the app.
+    if (navigator.onLine) {
+      showConnectionIssueModal.value = true;
+    }
   }
 
   if (Capacitor.isNativePlatform()) {
@@ -213,6 +240,17 @@ onMounted(async () => {
   border-radius: 10px;
   width: 100%;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dismiss-btn {
+  display: inline-block;
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 24px;
   -webkit-tap-highlight-color: transparent;
 }
 </style>
