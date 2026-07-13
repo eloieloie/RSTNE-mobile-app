@@ -1001,6 +1001,7 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   display: inline;
   color: #1a1a2e;
   line-height: 1.75;
+  font-family: 'HebrewScript', -apple-system, BlinkMacSystemFont, 'Arial Hebrew', 'Helvetica Neue', sans-serif;
 }
 
 :deep(.verse-text p),
@@ -1015,6 +1016,7 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   color: #1a1a2e;
   line-height: 1.75;
   margin-top: 4px;
+  font-family: 'Kohinoor Telugu', 'Noto Sans Telugu', 'Telugu Sangam MN', sans-serif;
 }
 
 /* Notes */
@@ -1036,12 +1038,14 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   font-weight: 700;
   color: #92400e;
   margin-bottom: 2px;
+  font-family: 'Kohinoor Telugu', 'Noto Sans Telugu', 'Telugu Sangam MN', sans-serif;
 }
 
 .note-content {
   font-size: 13px;
   color: #78350f;
   line-height: 1.6;
+  font-family: 'Kohinoor Telugu', 'Noto Sans Telugu', 'Telugu Sangam MN', sans-serif;
 }
 
 /* Cross references */
@@ -1132,10 +1136,12 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   color: #1a1a2e;
   line-height: 1.75;
   margin: 0;
+  font-family: 'HebrewScript', -apple-system, BlinkMacSystemFont, 'Arial Hebrew', 'Helvetica Neue', sans-serif;
 }
 
 .cross-ref-telugu {
   margin-top: 8px;
+  font-family: 'Kohinoor Telugu', 'Noto Sans Telugu', 'Telugu Sangam MN', sans-serif;
 }
 
 .cross-ref-empty {

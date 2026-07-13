@@ -5,3 +5,19 @@
   font-style: normal;
   font-display: swap;
 }
+
+/*
+  Hebrew script fallback for iOS WKWebView.
+  lang="en" on the document restricts -apple-system / BlinkMacSystemFont from loading
+  Hebrew glyph data. This @font-face with unicode-range forces the browser to load a
+  local Hebrew-capable font for those code points regardless of document language.
+  Times New Roman is bundled on iOS and has full Biblical Hebrew + nikud coverage.
+*/
+@font-face {
+  font-family: 'HebrewScript';
+  src: local('Times New Roman'), local('TimesNewRomanPSMT'), local('Arial Hebrew'), local('ArialHebrew');
+  unicode-range: U+0590-05FF, U+FB1D-FB4F;
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}

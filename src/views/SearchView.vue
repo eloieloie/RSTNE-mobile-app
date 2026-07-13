@@ -298,6 +298,7 @@ input::placeholder {
   font-size: 14px;
   color: #374151;
   line-height: 1.6;
+  font-family: 'HebrewScript', -apple-system, BlinkMacSystemFont, 'Arial Hebrew', 'Helvetica Neue', sans-serif;
 }
 
 .result-telugu {
@@ -307,6 +308,7 @@ input::placeholder {
   margin-top: 4px;
   padding-top: 4px;
   border-top: 1px solid #f3f4f6;
+  font-family: 'Kohinoor Telugu', 'Noto Sans Telugu', 'Telugu Sangam MN', sans-serif;
 }
 
 .result-note {
