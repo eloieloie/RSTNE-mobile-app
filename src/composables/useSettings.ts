@@ -7,6 +7,10 @@ interface Settings {
   showCrossReferences: boolean;
   fontSize: number;
   keepScreenOn: boolean;
+  hasSeenOnboarding: boolean;
+  chaptersRead: number;
+  hasRequestedReview: boolean;
+  lastReadingRoute: string | null;
 }
 
 const STORAGE_KEY = 'rstne-settings';
@@ -18,6 +22,10 @@ const defaults: Settings = {
   showCrossReferences: false,
   fontSize: 16,
   keepScreenOn: false,
+  hasSeenOnboarding: false,
+  chaptersRead: 0,
+  hasRequestedReview: false,
+  lastReadingRoute: null,
 };
 
 function loadFromStorage(): Settings {

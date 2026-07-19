@@ -265,6 +265,8 @@ import { formatVerseWithPaleoBora } from '@/utils/formatVerse';
 import { generateVerseCardImage, stripHtmlKeepPaleo } from '@/utils/paleoBora';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Capacitor } from '@capacitor/core';
+import { InAppReview } from '@capacitor-community/in-app-review';
 
 const route = useRoute();
 const router = useRouter();
@@ -508,6 +510,12 @@ async function loadVerses(chapter: Chapter) {
   verses.value = [];
   try {
     verses.value = await getChapterVersesWithCrossRefs(chapter.chapter_id);
+    // Track chapters read for the review prompt
+    settings.chaptersRead = (settings.chaptersRead ?? 0) + 1;
+    if (!settings.hasRequestedReview && settings.chaptersRead >= 5 && Capacitor.isNativePlatform()) {
+      settings.hasRequestedReview = true;
+      try { await InAppReview.requestReview(); } catch {}
+    }
   } catch {
     // verses stay empty
   }

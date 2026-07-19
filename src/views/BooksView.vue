@@ -136,6 +136,50 @@
         </div>
       </div>
     </Transition>
+
+    <!-- First-launch onboarding overlay -->
+    <Transition name="fade">
+      <div v-if="!settings.hasSeenOnboarding" class="onboarding-overlay">
+        <div class="onboarding-card">
+          <div class="onboarding-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+          </div>
+          <h2 class="onboarding-title">Welcome to RSTNE</h2>
+          <p class="onboarding-subtitle">Restoration Scriptures True Name Edition in English &amp; Telugu</p>
+
+          <div class="onboarding-features">
+            <div class="onboarding-feature">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+              <div>
+                <strong>Sacred Names</strong>
+                <p>Key names rendered in their original ancient Hebrew script</p>
+              </div>
+            </div>
+            <div class="onboarding-feature">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg>
+              <div>
+                <strong>Bilingual Reading</strong>
+                <p>Toggle Telugu translation below each English verse</p>
+              </div>
+            </div>
+            <div class="onboarding-feature">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+              <div>
+                <strong>Cross References</strong>
+                <p>Explore connected scriptures as you study</p>
+              </div>
+            </div>
+          </div>
+
+          <button class="onboarding-btn" @click="settings.hasSeenOnboarding = true">
+            Get Started
+          </button>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -147,8 +191,10 @@ import { getChaptersByBookId } from '@/api/chapters';
 import { getVersesByChapterId } from '@/api/verses';
 import type { Book, Chapter } from '@/utils/collectionReferences';
 import { useBookLanguage, type BookNameLanguage } from '@/composables/useBookLanguage';
+import { useSettings } from '@/composables/useSettings';
 
 const router = useRouter();
+const settings = useSettings();
 const books = ref<Book[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -582,5 +628,114 @@ onMounted(loadBooks);
 .sheet-enter-from .bottom-sheet,
 .sheet-leave-to .bottom-sheet {
   transform: translateY(100%);
+}
+
+/* Onboarding overlay */
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.onboarding-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px 24px;
+  max-width: 360px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.onboarding-icon {
+  background: #EFF6FF;
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 4px;
+}
+
+.onboarding-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #111827;
+  text-align: center;
+  margin: 0;
+}
+
+.onboarding-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  text-align: center;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.onboarding-features {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 8px 0;
+}
+
+.onboarding-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.onboarding-feature svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.onboarding-feature strong {
+  display: block;
+  font-size: 15px;
+  color: #111827;
+  margin-bottom: 2px;
+}
+
+.onboarding-feature p {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.onboarding-btn {
+  width: 100%;
+  background: #1E40AF;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 4px;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.onboarding-btn:active {
+  opacity: 0.85;
+}
+
+/* Fade transition for onboarding */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

@@ -32,7 +32,7 @@
             <button
               class="toggle-switch"
               :class="{ active: settings.showEnglish }"
-              @click="settings.showEnglish = !settings.showEnglish"
+              @click="() => { tap(); settings.showEnglish = !settings.showEnglish; }"
             >
               <span class="toggle-slider"></span>
             </button>
@@ -46,7 +46,7 @@
             <button
               class="toggle-switch"
               :class="{ active: settings.showTelugu }"
-              @click="settings.showTelugu = !settings.showTelugu"
+              @click="() => { tap(); settings.showTelugu = !settings.showTelugu; }"
             >
               <span class="toggle-slider"></span>
             </button>
@@ -60,7 +60,7 @@
             <button
               class="toggle-switch"
               :class="{ active: settings.showNotes }"
-              @click="settings.showNotes = !settings.showNotes"
+              @click="() => { tap(); settings.showNotes = !settings.showNotes; }"
             >
               <span class="toggle-slider"></span>
             </button>
@@ -74,7 +74,7 @@
             <button
               class="toggle-switch"
               :class="{ active: settings.showCrossReferences }"
-              @click="settings.showCrossReferences = !settings.showCrossReferences"
+              @click="() => { tap(); settings.showCrossReferences = !settings.showCrossReferences; }"
             >
               <span class="toggle-slider"></span>
             </button>
@@ -87,7 +87,7 @@
             <button
               class="toggle-switch"
               :class="{ active: settings.keepScreenOn }"
-              @click="settings.keepScreenOn = !settings.keepScreenOn"
+              @click="() => { tap(); settings.keepScreenOn = !settings.keepScreenOn; }"
             >
               <span class="toggle-slider"></span>
             </button>
@@ -105,29 +105,121 @@
               <button
                 class="font-btn"
                 :disabled="settings.fontSize <= 12"
-                @click="settings.fontSize -= 1"
+                @click="() => { tap(); settings.fontSize -= 1; }"
               >A−</button>
               <span class="font-size-label">{{ settings.fontSize }}px</span>
               <button
                 class="font-btn"
                 :disabled="settings.fontSize >= 26"
-                @click="settings.fontSize += 1"
+                @click="() => { tap(); settings.fontSize += 1; }"
               >A+</button>
             </div>
           </div>
         </div>
       </section>
 
+      <!-- Support -->
+      <section class="settings-section">
+        <h2 class="section-title">Support</h2>
+        <div class="settings-group">
+          <button class="settings-row-btn" @click="() => { tap(); showFeedback = true; }">
+            <div class="row-btn-label">
+              <span class="setting-name">Send Feedback</span>
+              <span class="setting-desc">Report bugs or suggest features</span>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+          <button class="settings-row-btn" @click="() => { tap(); requestReview(); }">
+            <div class="row-btn-label">
+              <span class="setting-name">Rate this App</span>
+              <span class="setting-desc">Enjoying RSTNE? Leave a review</span>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- Legal -->
+      <section class="settings-section">
+        <h2 class="section-title">Legal</h2>
+        <div class="settings-group">
+          <button class="settings-row-btn" @click="openPrivacyPolicy">
+            <div class="row-btn-label">
+              <span class="setting-name">Privacy Policy</span>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </button>
+          <button class="settings-row-btn" @click="openTerms">
+            <div class="row-btn-label">
+              <span class="setting-name">Terms &amp; Conditions</span>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </button>
+        </div>
+      </section>
+
       <p class="app-version">Version {{ APP_VERSION }}</p>
     </div>
+
+    <!-- Feedback bottom sheet -->
+    <Transition name="sheet">
+      <div v-if="showFeedback" class="sheet-backdrop" @click.self="closeFeedback">
+        <div class="bottom-sheet" @click.stop>
+          <div class="sheet-handle"></div>
+          <h3 class="sheet-title">Send Feedback</h3>
+
+          <div v-if="feedbackSuccess" class="feedback-success-state">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <p>Thank you for your feedback!</p>
+          </div>
+
+          <div v-else class="feedback-form">
+            <select v-model="feedbackCategory" class="feedback-select">
+              <option value="general">General Feedback</option>
+              <option value="bug">Bug Report</option>
+              <option value="feature">Feature Request</option>
+            </select>
+            <textarea
+              v-model="feedbackMessage"
+              class="feedback-textarea"
+              placeholder="Tell us what you think, report a bug, or suggest a feature..."
+              rows="5"
+            ></textarea>
+            <input
+              v-model="feedbackEmail"
+              type="email"
+              class="feedback-email-input"
+              placeholder="Your email (optional, for follow-up)"
+            />
+            <p v-if="feedbackError" class="feedback-error">{{ feedbackError }}</p>
+            <button
+              class="feedback-submit-btn"
+              :disabled="feedbackSubmitting || !feedbackMessage.trim()"
+              @click="doSubmitFeedback"
+            >
+              {{ feedbackSubmitting ? 'Sending...' : 'Send Feedback' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import { useSettings } from '@/composables/useSettings';
 import { useBookLanguage, type BookNameLanguage } from '@/composables/useBookLanguage';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { Capacitor } from '@capacitor/core';
+import { App as CapApp } from '@capacitor/app';
+import { InAppReview } from '@capacitor-community/in-app-review';
+import { submitFeedback } from '@/api/feedback';
 
-const APP_VERSION = '13.1.0';
+const APP_VERSION = '14.1.0';
 
 const settings = useSettings();
 const { bookNameLanguage } = useBookLanguage();
@@ -137,6 +229,74 @@ const langOptions: { value: BookNameLanguage; label: string }[] = [
   { value: 'hebrew', label: 'Hebrew' },
   { value: 'telugu', label: 'Telugu' },
 ];
+
+// Haptic feedback
+async function tap() {
+  if (Capacitor.isNativePlatform()) {
+    try { await Haptics.impact({ style: ImpactStyle.Light }); } catch {}
+  }
+}
+
+// Open URLs in system browser
+function openPrivacyPolicy() {
+  window.open('https://eat-rstne-26.web.app/privacy-policy', '_system');
+}
+
+function openTerms() {
+  window.open('https://eat-rstne-26.web.app/terms-and-conditions', '_system');
+}
+
+// Native app review
+async function requestReview() {
+  if (!Capacitor.isNativePlatform()) return;
+  try {
+    await InAppReview.requestReview();
+  } catch {}
+}
+
+// Feedback sheet
+const showFeedback = ref(false);
+const feedbackCategory = ref<'general' | 'bug' | 'feature'>('general');
+const feedbackMessage = ref('');
+const feedbackEmail = ref('');
+const feedbackSubmitting = ref(false);
+const feedbackError = ref('');
+const feedbackSuccess = ref(false);
+
+function closeFeedback() {
+  showFeedback.value = false;
+  feedbackSuccess.value = false;
+  feedbackError.value = '';
+}
+
+async function doSubmitFeedback() {
+  if (!feedbackMessage.value.trim()) return;
+  feedbackSubmitting.value = true;
+  feedbackError.value = '';
+  try {
+    let platform = 'web';
+    let app_version = APP_VERSION;
+    if (Capacitor.isNativePlatform()) {
+      platform = Capacitor.getPlatform();
+      try { const info = await CapApp.getInfo(); app_version = info.version; } catch {}
+    }
+    await submitFeedback({
+      message: feedbackMessage.value.trim(),
+      email: feedbackEmail.value.trim() || undefined,
+      category: feedbackCategory.value,
+      app_version,
+      platform,
+    });
+    feedbackSuccess.value = true;
+    feedbackMessage.value = '';
+    feedbackEmail.value = '';
+    setTimeout(() => { showFeedback.value = false; feedbackSuccess.value = false; }, 2500);
+  } catch {
+    feedbackError.value = 'Failed to send. Please try again.';
+  } finally {
+    feedbackSubmitting.value = false;
+  }
+}
 </script>
 
 <style scoped>
@@ -349,5 +509,176 @@ const langOptions: { value: BookNameLanguage; label: string }[] = [
   color: #9ca3af;
   margin: 0;
   padding-bottom: 8px;
+}
+
+/* Row-style setting button (Legal, Support items) */
+.settings-row-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f3f4f6;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  text-align: left;
+}
+
+.settings-row-btn:last-child {
+  border-bottom: none;
+}
+
+.settings-row-btn:active {
+  opacity: 0.6;
+}
+
+.row-btn-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Bottom sheet */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+}
+
+.bottom-sheet {
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  padding: 12px 20px calc(20px + var(--safe-area-bottom));
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: #d1d5db;
+  border-radius: 2px;
+  margin: 0 auto 16px;
+}
+
+.sheet-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 16px;
+}
+
+/* Feedback form */
+.feedback-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.feedback-select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1.5px solid #d1d5db;
+  font-size: 15px;
+  font-family: inherit;
+  background: #f9fafb;
+  color: #111827;
+  appearance: auto;
+}
+
+.feedback-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1.5px solid #d1d5db;
+  font-size: 15px;
+  font-family: inherit;
+  background: #f9fafb;
+  color: #111827;
+  resize: none;
+  line-height: 1.5;
+}
+
+.feedback-textarea:focus,
+.feedback-email-input:focus,
+.feedback-select:focus {
+  outline: none;
+  border-color: #1E40AF;
+}
+
+.feedback-email-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1.5px solid #d1d5db;
+  font-size: 15px;
+  font-family: inherit;
+  background: #f9fafb;
+  color: #111827;
+}
+
+.feedback-error {
+  font-size: 13px;
+  color: #dc2626;
+  margin: 0;
+}
+
+.feedback-submit-btn {
+  background: #1E40AF;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: 600;
+  width: 100%;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  font-family: inherit;
+}
+
+.feedback-submit-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.feedback-success-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 0;
+  text-align: center;
+  color: #16a34a;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* Sheet transitions */
+.sheet-enter-active,
+.sheet-leave-active {
+  transition: opacity 0.2s;
+}
+.sheet-enter-active .bottom-sheet,
+.sheet-leave-active .bottom-sheet {
+  transition: transform 0.25s ease;
+}
+.sheet-enter-from,
+.sheet-leave-to {
+  opacity: 0;
+}
+.sheet-enter-from .bottom-sheet,
+.sheet-leave-to .bottom-sheet {
+  transform: translateY(100%);
 }
 </style>
