@@ -2,26 +2,26 @@
   <div class="reading-view">
     <!-- Top nav -->
     <header class="reading-nav">
-      <button class="back-btn" @click="router.push('/')">
+      <motion.button class="back-btn" :while-tap="tapScale" @click="router.push('/')">
         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M15 18l-6-6 6-6"/>
         </svg>
-      </button>
+      </motion.button>
 
-      <button class="nav-title-btn" @click="showChapterPicker = true">
+      <motion.button class="nav-title-btn" :while-tap="tapScale" @click="showChapterPicker = true">
         <span class="nav-book-name">{{ currentBook ? getBookName(currentBook) : '...' }}</span>
         <span v-if="selectedChapter" class="nav-chapter">Ch. {{ selectedChapter.chapter_number }}</span>
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="6 9 12 15 18 9"/>
         </svg>
-      </button>
+      </motion.button>
 
-      <button class="search-btn" @click="router.push('/search')">
+      <motion.button class="search-btn" :while-tap="tapScale" @click="router.push('/search')">
         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="8"/>
           <path d="m21 21-4.35-4.35"/>
         </svg>
-      </button>
+      </motion.button>
     </header>
 
     <!-- Search results navigation bar -->
@@ -60,7 +60,7 @@
       </svg>
       <p class="error-title">Failed to load</p>
       <p class="error-desc">Check your network connection and try again.</p>
-      <button class="retry-btn" @click="retryLoad">Tap to retry</button>
+      <motion.button class="retry-btn" :while-tap="tapScale" @click="retryLoad">Tap to retry</motion.button>
     </div>
 
     <!-- Verses — always keep mounted once loaded so versesEl ref stays valid during scrollPending -->
@@ -72,12 +72,15 @@
           {{ currentBook ? getBookName(currentBook) : '' }} {{ selectedChapter.chapter_number }}
         </div>
 
-        <div
-          v-for="verse in verses"
+        <motion.div
+          v-for="(verse, index) in verses"
           :key="verse.verse_id"
           class="verse-row"
           :class="{ highlighted: String(verse.verse_index) === highlightedVerseIndex }"
           :data-verse-index="verse.verse_index"
+          :initial="prefersReducedMotion ? false : { opacity: 0, y: 8 }"
+          :animate="{ opacity: 1, y: 0 }"
+          :transition="verseEnterTransition(index)"
           @click="selectVerse(verse.verse_id)"
         >
           <div class="verse-body">
@@ -115,27 +118,29 @@
               v-if="settings.showCrossReferences && verse.crossReferences && verse.crossReferences.length > 0"
               class="cross-refs"
             >
-              <button
+              <motion.button
                 v-for="ref in (expandedCrossRefs.has(verse.verse_id) ? verse.crossReferences : verse.crossReferences.slice(0, 3))"
                 :key="ref.cross_ref_id"
                 class="cross-ref-chip"
+                :while-tap="tapScale"
                 @click="openCrossRef(ref)"
               >
                 {{ getCrossRefLabel(ref) }} {{ ref.to_chapter }}:{{ ref.to_verse }}
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 v-if="!expandedCrossRefs.has(verse.verse_id) && verse.crossReferences.length > 3"
                 class="cross-ref-chip cross-ref-more"
+                :while-tap="tapScale"
                 @click="expandedCrossRefs = new Set(expandedCrossRefs).add(verse.verse_id)"
               >
                 +{{ verse.crossReferences.length - 3 }} more
-              </button>
+              </motion.button>
             </div>
 
             <!-- Share action bar (visible when verse is selected) -->
             <div v-if="selectedVerseId === verse.verse_id" class="verse-actions" @click.stop>
               <div class="verse-actions-bar">
-                <button class="verse-action-btn" @click.stop="shareVerse(verse)">
+                <motion.button class="verse-action-btn" :while-tap="tapScale" @click.stop="shareVerse(verse)">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="18" cy="5" r="3"></circle>
                     <circle cx="6" cy="12" r="3"></circle>
@@ -144,32 +149,34 @@
                     <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
                   </svg>
                   Share
-                </button>
+                </motion.button>
                 <span v-if="copiedVerseId === verse.verse_id" class="copied-feedback">Copied!</span>
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         <div v-if="verses.length === 0" class="empty-state">No verses found for this chapter.</div>
 
         <!-- Chapter nav -->
         <div class="chapter-nav-row">
-          <button
+          <motion.button
             v-if="prevChapter"
             class="chapter-nav-btn"
+            :while-tap="tapScale"
             @click="navigateToChapter(prevChapter!.chapter_id)"
           >
             ← Ch. {{ prevChapter.chapter_number }}
-          </button>
+          </motion.button>
           <span class="spacer"></span>
-          <button
+          <motion.button
             v-if="nextChapter"
             class="chapter-nav-btn"
+            :while-tap="tapScale"
             @click="navigateToChapter(nextChapter!.chapter_id)"
           >
             Ch. {{ nextChapter.chapter_number }} →
-          </button>
+          </motion.button>
         </div>
       </div>
     </main>
@@ -180,13 +187,28 @@
     </div>
 
     <!-- Cross-reference preview bottom sheet -->
-    <Transition name="sheet">
-      <div v-if="crossRefSheet.show" class="sheet-backdrop" @click="crossRefSheet.show = false">
-        <div class="bottom-sheet cross-ref-sheet" @click.stop>
+    <AnimatePresence>
+      <motion.div
+        v-if="crossRefSheet.show"
+        class="sheet-backdrop"
+        :initial="{ opacity: 0 }"
+        :animate="{ opacity: 1 }"
+        :exit="{ opacity: 0 }"
+        :transition="{ duration: prefersReducedMotion ? 0 : 0.18 }"
+        @click="crossRefSheet.show = false"
+      >
+        <motion.div
+          class="bottom-sheet cross-ref-sheet"
+          :initial="{ y: '100%' }"
+          :animate="{ y: 0 }"
+          :exit="{ y: '100%' }"
+          :transition="sheetSpring"
+          @click.stop
+        >
           <div class="sheet-handle"></div>
           <div class="sheet-header-row">
             <h3 class="sheet-title">{{ crossRefSheet.title }}</h3>
-            <button class="sheet-go-btn" @click="goToCrossRef" title="Go to chapter">↗</button>
+            <motion.button class="sheet-go-btn" :while-tap="tapScale" @click="goToCrossRef" title="Go to chapter">↗</motion.button>
           </div>
           <div class="cross-ref-body" @click="handleCrossRefBodyClick">
             <div v-if="crossRefSheet.loading" class="cross-ref-loading">
@@ -198,59 +220,92 @@
               <p v-if="crossRefSheet.teluguVerseText && settings.showTelugu" class="cross-ref-verse cross-ref-telugu" :style="{ fontSize: settings.fontSize + 'px' }" v-html="formatVerseWithPaleoBora(crossRefSheet.teluguVerseText, bookAbbreviations, getDisplayAbbr)"></p>
             </div>
           </div>
-        </div>
-      </div>
-    </Transition>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
 
     <!-- Chapter picker bottom sheet -->
-    <Transition name="sheet">
-      <div v-if="showChapterPicker" class="sheet-backdrop" @click="showChapterPicker = false">
-        <div class="bottom-sheet" @click.stop>
+    <AnimatePresence>
+      <motion.div
+        v-if="showChapterPicker"
+        class="sheet-backdrop"
+        :initial="{ opacity: 0 }"
+        :animate="{ opacity: 1 }"
+        :exit="{ opacity: 0 }"
+        :transition="{ duration: prefersReducedMotion ? 0 : 0.18 }"
+        @click="showChapterPicker = false"
+      >
+        <motion.div
+          class="bottom-sheet"
+          :initial="{ y: '100%' }"
+          :animate="{ y: 0 }"
+          :exit="{ y: '100%' }"
+          :transition="sheetSpring"
+          @click.stop
+        >
           <div class="sheet-handle"></div>
           <h3 class="sheet-title">Select Chapter</h3>
           <div class="chapter-list">
-            <button
+            <motion.button
               v-for="ch in chapters"
               :key="ch.chapter_id"
               class="chapter-item"
               :class="{ selected: ch.chapter_id === selectedChapter?.chapter_id }"
+              :while-tap="tapScale"
               @click="openVersePicker(ch)"
             >
               {{ ch.chapter_number }}
-            </button>
+            </motion.button>
           </div>
-        </div>
-      </div>
-    </Transition>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
 
     <!-- Verse picker bottom sheet -->
-    <Transition name="sheet">
-      <div v-if="showVersePicker" class="sheet-backdrop" @click="showVersePicker = false">
-        <div class="bottom-sheet" @click.stop>
+    <AnimatePresence>
+      <motion.div
+        v-if="showVersePicker"
+        class="sheet-backdrop"
+        :initial="{ opacity: 0 }"
+        :animate="{ opacity: 1 }"
+        :exit="{ opacity: 0 }"
+        :transition="{ duration: prefersReducedMotion ? 0 : 0.18 }"
+        @click="showVersePicker = false"
+      >
+        <motion.div
+          class="bottom-sheet"
+          :initial="{ y: '100%' }"
+          :animate="{ y: 0 }"
+          :exit="{ y: '100%' }"
+          :transition="sheetSpring"
+          @click.stop
+        >
           <div class="sheet-handle"></div>
           <h3 class="sheet-title">{{ currentBook ? getBookName(currentBook) : '' }} {{ versePickerChapter?.chapter_number }} — Select Verse</h3>
           <div v-if="versePickerLoading" class="sheet-loading">
             <div class="spinner"></div>
           </div>
           <div v-else class="chapter-list">
-            <button
+            <motion.button
               v-for="idx in versePickerIndices"
               :key="idx"
               class="chapter-item"
+              :while-tap="tapScale"
               @click="navigateToPickerVerse(idx)"
             >
               {{ idx }}
-            </button>
+            </motion.button>
           </div>
-        </div>
-      </div>
-    </Transition>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { motion, AnimatePresence, useReducedMotion } from 'motion-v';
 import { getBookById, getAllBooks } from '@/api/books';
 import { getChaptersByBookId } from '@/api/chapters';
 import { getVersesByChapterId } from '@/api/verses';
@@ -272,6 +327,19 @@ const route = useRoute();
 const router = useRouter();
 const settings = useSettings();
 const { getBookName, getBookAbbr } = useBookLanguage();
+
+// ── Motion (motion-v) ──────────────────────────────────────────────────────
+// Respect the OS-level "reduce motion" preference across every animated element.
+const prefersReducedMotion = useReducedMotion();
+
+const sheetSpring = { type: 'spring', stiffness: 380, damping: 32 } as const;
+const tapScale = computed(() => (prefersReducedMotion.value ? {} : { scale: 0.96 }));
+
+// Per-verse stagger entrance — capped so long chapters don't produce a long queued animation.
+function verseEnterTransition(index: number) {
+  if (prefersReducedMotion.value) return { duration: 0 };
+  return { duration: 0.28, delay: Math.min(index, 12) * 0.025, ease: [0.4, 0, 0.2, 1] };
+}
 
 // Wake lock
 let wakeLock: WakeLockSentinel | null = null;
@@ -771,17 +839,17 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fff;
+  background: var(--color-background);
   overflow: hidden;
 }
 
 .reading-nav {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-3);
+  background: var(--color-background);
+  border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 
@@ -866,9 +934,9 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
 
 .back-btn,
 .search-btn {
-  color: #1E40AF;
-  padding: 6px;
-  border-radius: 8px;
+  color: var(--color-primary);
+  padding: var(--space-2);
+  border-radius: var(--radius-default);
   flex-shrink: 0;
 }
 
@@ -877,51 +945,51 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: #f3f4f6;
-  color: #1a1a2e;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-default);
+  background: var(--color-muted);
+  color: var(--color-foreground);
 }
 
 .nav-book-name {
   font-weight: 700;
-  font-size: 15px;
+  font-size: var(--font-size-base);
 }
 
 .nav-chapter {
-  font-size: 13px;
-  color: #6b7280;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted-foreground);
 }
 
 .error-state {
   flex-direction: column;
-  gap: 8px;
-  padding: 24px;
+  gap: var(--space-2);
+  padding: var(--space-6);
   text-align: center;
 }
 
 .error-title {
-  font-size: 16px;
+  font-size: var(--font-size-md);
   font-weight: 600;
-  color: #dc2626;
+  color: var(--color-error);
   margin: 4px 0 0;
 }
 
 .error-desc {
-  font-size: 13px;
-  color: #6b7280;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted-foreground);
   margin: 0;
 }
 
 .retry-btn {
-  margin-top: 8px;
+  margin-top: var(--space-2);
   padding: 10px 28px;
-  background: #1E40AF;
-  color: #fff;
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: var(--radius-default);
+  font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
   min-height: 44px;
@@ -941,15 +1009,15 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.75);
+  background: rgb(255 255 255 / 0.75);
   z-index: 10;
 }
 
 .spinner {
   width: 36px;
   height: 36px;
-  border: 3px solid #e5e7eb;
-  border-top-color: #1E40AF;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -959,9 +1027,9 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
 }
 
 .error-text {
-  color: #dc2626;
-  font-size: 14px;
-  padding: 20px;
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  padding: var(--space-5);
   text-align: center;
 }
 
@@ -969,27 +1037,27 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 16px 16px 24px;
+  padding: var(--space-4) var(--space-4) var(--space-6);
 }
 
 .chapter-title {
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   font-weight: 700;
-  color: #1a1a2e;
-  margin-bottom: 16px;
+  color: var(--color-foreground);
+  margin-bottom: var(--space-4);
 }
 
 .verse-row {
   display: block;
-  margin-bottom: 14px;
-  border-radius: 8px;
-  padding: 4px 6px;
+  margin-bottom: var(--spacing-verse-gap);
+  border-radius: var(--radius-default);
+  padding: var(--space-1) var(--space-2);
   margin-left: -6px;
-  transition: background 0.4s ease;
+  transition: background var(--duration-normal) var(--ease-default);
 }
 
 .verse-row.highlighted {
-  background: #FEF9C3;
+  background: var(--color-highlight-bg);
   transition: background 0s;
 }
 
@@ -997,7 +1065,7 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   display: inline;
   font-size: 0.75em;
   font-weight: 700;
-  color: #9ca3af;
+  color: var(--color-muted-foreground);
   margin-right: 4px;
 }
 
@@ -1007,9 +1075,9 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
 
 .verse-text {
   display: inline;
-  color: #1a1a2e;
-  line-height: 1.75;
-  font-family: 'HebrewScript', -apple-system, BlinkMacSystemFont, 'Arial Hebrew', 'Helvetica Neue', sans-serif;
+  color: var(--color-foreground);
+  line-height: var(--leading-reading);
+  font-family: var(--font-family-body);
 }
 
 :deep(.verse-text p),
@@ -1021,39 +1089,39 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
 
 .verse-telugu {
   display: block;
-  color: #1a1a2e;
-  line-height: 1.75;
+  color: var(--color-foreground);
+  line-height: var(--leading-reading);
   margin-top: 4px;
-  font-family: 'Kohinoor Telugu', 'Noto Sans Telugu', 'Telugu Sangam MN', sans-serif;
+  font-family: var(--font-family-telugu);
 }
 
 /* Notes */
 .verse-notes {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .note-item {
-  background: #fefce8;
-  border-left: 3px solid #fbbf24;
-  border-radius: 0 6px 6px 0;
-  padding: 6px 10px;
+  background: var(--color-note-bg);
+  border-left: 3px solid var(--color-note-border);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: var(--space-2) var(--space-3);
 }
 
 .note-title {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
-  color: #92400e;
+  color: var(--color-note-title);
   margin-bottom: 2px;
-  font-family: 'Kohinoor Telugu', 'Noto Sans Telugu', 'Telugu Sangam MN', sans-serif;
+  font-family: var(--font-family-telugu);
 }
 
 .note-content {
-  font-size: 13px;
-  color: #78350f;
+  font-size: var(--font-size-sm);
+  color: var(--color-note-text);
   line-height: 1.6;
-  font-family: 'Kohinoor Telugu', 'Noto Sans Telugu', 'Telugu Sangam MN', sans-serif;
+  font-family: var(--font-family-telugu);
 }
 
 /* Cross references */
@@ -1061,13 +1129,13 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .cross-refs-label {
   font-size: 11px;
   font-weight: 600;
-  color: #9ca3af;
+  color: var(--color-muted-foreground);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -1076,7 +1144,7 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
 .verse-telugu :deep(.inline-verse-ref),
 .note-content :deep(.inline-verse-ref),
 .cross-ref-verse :deep(.inline-verse-ref) {
-  color: #1E40AF;
+  color: var(--color-primary);
   text-decoration: underline;
   text-decoration-style: dotted;
   -webkit-tap-highlight-color: transparent;
@@ -1086,18 +1154,18 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
 }
 
 .cross-ref-chip {
-  font-size: 12px;
-  color: #1E40AF;
-  background: #E6F2FF;
-  border-radius: 20px;
+  font-size: var(--font-size-xs);
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  border-radius: var(--radius-full);
   padding: 3px 10px;
   font-weight: 500;
   -webkit-tap-highlight-color: transparent;
 }
 
 .cross-ref-more {
-  color: #6b7280;
-  background: #f3f4f6;
+  color: var(--color-muted-foreground);
+  background: var(--color-muted);
 }
 
 /* Cross-ref preview sheet */
@@ -1108,8 +1176,8 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
 .sheet-header-row {
   display: flex;
   align-items: center;
-  padding: 4px 16px 12px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 4px var(--space-4) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 
@@ -1118,191 +1186,173 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   text-align: left;
   padding: 0;
   border-bottom: none;
-  font-size: 15px;
+  font-size: var(--font-size-base);
 }
 
 .sheet-go-btn {
-  font-size: 18px;
-  color: #1E40AF;
-  padding: 4px 8px;
+  font-size: var(--font-size-lg);
+  color: var(--color-primary);
+  padding: 4px var(--space-2);
   -webkit-tap-highlight-color: transparent;
 }
 
 .cross-ref-body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 16px;
+  padding: var(--space-4);
 }
 
 .cross-ref-loading {
   display: flex;
   justify-content: center;
-  padding: 20px 0;
+  padding: var(--space-5) 0;
 }
 
 .cross-ref-verse {
-  color: #1a1a2e;
-  line-height: 1.75;
+  color: var(--color-foreground);
+  line-height: var(--leading-reading);
   margin: 0;
-  font-family: 'HebrewScript', -apple-system, BlinkMacSystemFont, 'Arial Hebrew', 'Helvetica Neue', sans-serif;
+  font-family: var(--font-family-body);
 }
 
 .cross-ref-telugu {
-  margin-top: 8px;
-  font-family: 'Kohinoor Telugu', 'Noto Sans Telugu', 'Telugu Sangam MN', sans-serif;
+  margin-top: var(--space-2);
+  font-family: var(--font-family-telugu);
 }
 
 .cross-ref-empty {
-  color: #9ca3af;
-  font-size: 14px;
+  color: var(--color-muted-foreground);
+  font-size: var(--font-size-sm);
   text-align: center;
   margin: 0;
 }
 
 .empty-state {
   text-align: center;
-  color: #9ca3af;
-  font-size: 14px;
-  padding: 40px 20px;
+  color: var(--color-muted-foreground);
+  font-size: var(--font-size-sm);
+  padding: var(--space-8) var(--space-5);
 }
 
 /* Verse share action bar */
 .verse-actions {
-  margin-top: 8px;
+  margin-top: var(--space-2);
 }
 
 .verse-actions-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .verse-action-btn {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
-  color: #1E40AF;
+  color: var(--color-primary);
   padding: 6px 14px;
-  border-radius: 20px;
-  background: #E6F2FF;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-light);
   -webkit-tap-highlight-color: transparent;
   min-height: 44px;
 }
 
 .copied-feedback {
   font-size: 12px;
-  color: #16a34a;
+  color: var(--color-success);
   font-weight: 500;
 }
 
 .chapter-nav-row {
   display: flex;
   align-items: center;
-  margin-top: 32px;
-  padding-top: 16px;
-  border-top: 1px solid #e5e7eb;
+  margin-top: var(--space-8);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
 }
 
 .spacer { flex: 1; }
 
 .chapter-nav-btn {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
-  color: #1E40AF;
-  padding: 10px 16px;
-  border-radius: 8px;
-  background: #E6F2FF;
+  color: var(--color-primary);
+  padding: 10px var(--space-4);
+  border-radius: var(--radius-default);
+  background: var(--color-primary-light);
 }
 
-/* Bottom sheet */
+/* Bottom sheet — enter/exit animation is driven by motion-v (AnimatePresence + spring) */
 .sheet-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgb(0 0 0 / 0.4);
   display: flex;
   align-items: flex-end;
   z-index: 100;
 }
 
 .bottom-sheet {
-  background: #fff;
-  border-radius: 20px 20px 0 0;
+  background: var(--color-card);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   width: 100%;
   max-height: 70vh;
   display: flex;
   flex-direction: column;
   padding-bottom: var(--safe-area-bottom);
+  box-shadow: var(--shadow-sheet);
 }
 
 .sheet-handle {
   width: 36px;
   height: 4px;
-  background: #d1d5db;
-  border-radius: 2px;
-  margin: 12px auto 8px;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+  margin: var(--space-3) auto var(--space-2);
   flex-shrink: 0;
 }
 
 .sheet-title {
-  font-size: 16px;
+  font-size: var(--font-size-md);
   font-weight: 700;
   text-align: center;
-  color: #1a1a2e;
-  padding: 4px 16px 12px;
+  color: var(--color-foreground);
+  padding: 4px var(--space-4) var(--space-3);
   flex-shrink: 0;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .sheet-loading {
   display: flex;
   justify-content: center;
-  padding: 24px 0;
+  padding: var(--space-6) 0;
 }
 
 .chapter-list {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-  padding: 16px;
+  gap: var(--space-2);
+  padding: var(--space-4);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 
 .chapter-item {
   aspect-ratio: 1;
-  border-radius: 10px;
-  background: #f3f4f6;
-  color: #374151;
-  font-size: 15px;
+  border-radius: var(--radius-lg);
+  background: var(--color-muted);
+  color: var(--color-neutral-700);
+  font-size: var(--font-size-base);
   font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.1s;
 }
 
 .chapter-item.selected {
-  background: #1E40AF;
-  color: #fff;
-}
-
-/* Transitions */
-.sheet-enter-active,
-.sheet-leave-active {
-  transition: opacity 0.2s;
-}
-.sheet-enter-active .bottom-sheet,
-.sheet-leave-active .bottom-sheet {
-  transition: transform 0.25s ease;
-}
-.sheet-enter-from,
-.sheet-leave-to {
-  opacity: 0;
-}
-.sheet-enter-from .bottom-sheet,
-.sheet-leave-to .bottom-sheet {
-  transform: translateY(100%);
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
 }
 </style>
