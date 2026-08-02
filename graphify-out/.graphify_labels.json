@@ -1,0 +1,23 @@
+{
+  "0": "ReadingView.vue",
+  "1": "package.json",
+  "2": "devDependencies",
+  "3": "dependencies",
+  "4": "applyPendingScroll",
+  "5": "openVersePreview",
+  "6": "@capacitor/android",
+  "7": "@capacitor/app",
+  "8": "@capacitor/browser",
+  "9": "@capacitor-community/in-app-review",
+  "10": "@capacitor/filesystem",
+  "11": "@capacitor/haptics",
+  "12": "@capacitor/ios",
+  "13": "@capacitor/push-notifications",
+  "14": "@capacitor/share",
+  "15": "@capacitor/status-bar",
+  "16": "motion-v",
+  "17": "vue",
+  "18": "vue-router",
+  "19": "acquireWakeLock",
+  "20": "main.ts"
+}
