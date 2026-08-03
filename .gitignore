@@ -5,3 +5,6 @@ dist/
 .env
 .env.*
 !.env.example
+
+# Graphify knowledge-graph output (auto-regenerated on commit)
+graphify-out/
