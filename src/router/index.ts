@@ -5,6 +5,8 @@ import SearchView from '@/views/SearchView.vue';
 import SettingsView from '@/views/SettingsView.vue';
 import WeeklyReadingView from '@/views/WeeklyReadingView.vue';
 import FeastsView from '@/views/FeastsView.vue';
+import LoginView from '@/views/LoginView.vue';
+import RegisterView from '@/views/RegisterView.vue';
 
 const router = createRouter({
   // Hash history works better in Capacitor (no server-side routing needed)
@@ -39,6 +41,16 @@ const router = createRouter({
       path: '/feasts',
       name: 'feasts',
       component: FeastsView,
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: LoginView,
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: RegisterView,
     },
   ],
 });

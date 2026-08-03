@@ -5,17 +5,39 @@
     </header>
 
     <div class="settings-body">
+      <!-- Account -->
+      <section class="settings-section">
+        <h2 class="section-title">Account</h2>
+        <div class="settings-group">
+          <div v-if="user" class="account-row">
+            <div class="account-info">
+              <span class="setting-name">{{ user.email }}</span>
+              <span v-if="isAdmin" class="admin-badge">Admin</span>
+            </div>
+            <motion.button class="account-action-btn" :while-tap="tapScale" @click="() => { tap(); handleSignOut(); }">Sign Out</motion.button>
+          </div>
+          <motion.button v-else class="settings-row-btn" :while-tap="tapScale" @click="() => { tap(); router.push('/login'); }">
+            <div class="row-btn-label">
+              <span class="setting-name">Sign In / Register</span>
+              <span class="setting-desc">Optional — keep personal notes across devices</span>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </motion.button>
+        </div>
+      </section>
+
       <!-- Book Names Language -->
       <section class="settings-section">
         <h2 class="section-title">Book Names Language</h2>
         <div class="settings-group">
           <div class="lang-options">
-            <button
+            <motion.button
               v-for="opt in langOptions"
               :key="opt.value"
               :class="['lang-option-btn', { active: bookNameLanguage === opt.value }]"
+              :while-tap="tapScale"
               @click="bookNameLanguage = opt.value"
-            >{{ opt.label }}</button>
+            >{{ opt.label }}</motion.button>
           </div>
         </div>
       </section>
@@ -29,13 +51,14 @@
               <span class="setting-name">Show English Verse</span>
               <span class="setting-desc">Display the English verse text while reading</span>
             </div>
-            <button
+            <motion.button
               class="toggle-switch"
               :class="{ active: settings.showEnglish }"
+              :while-tap="tapScale"
               @click="() => { tap(); settings.showEnglish = !settings.showEnglish; }"
             >
               <span class="toggle-slider"></span>
-            </button>
+            </motion.button>
           </label>
 
           <label class="setting-item">
@@ -43,27 +66,44 @@
               <span class="setting-name">Show Telugu Verse</span>
               <span class="setting-desc">Display Telugu translation below each verse</span>
             </div>
-            <button
+            <motion.button
               class="toggle-switch"
               :class="{ active: settings.showTelugu }"
+              :while-tap="tapScale"
               @click="() => { tap(); settings.showTelugu = !settings.showTelugu; }"
             >
               <span class="toggle-slider"></span>
-            </button>
+            </motion.button>
           </label>
 
           <label class="setting-item">
             <div class="setting-label">
-              <span class="setting-name">Show Notes</span>
-              <span class="setting-desc">Display study notes attached to verses</span>
+              <span class="setting-name">Show Admin Notes</span>
+              <span class="setting-desc">Display study notes added by RSTNE admins</span>
             </div>
-            <button
+            <motion.button
               class="toggle-switch"
-              :class="{ active: settings.showNotes }"
-              @click="() => { tap(); settings.showNotes = !settings.showNotes; }"
+              :class="{ active: settings.showAdminNotes }"
+              :while-tap="tapScale"
+              @click="() => { tap(); settings.showAdminNotes = !settings.showAdminNotes; }"
             >
               <span class="toggle-slider"></span>
-            </button>
+            </motion.button>
+          </label>
+
+          <label class="setting-item">
+            <div class="setting-label">
+              <span class="setting-name">Show My Notes</span>
+              <span class="setting-desc">Display your own personal notes on verses</span>
+            </div>
+            <motion.button
+              class="toggle-switch"
+              :class="{ active: settings.showMyNotes }"
+              :while-tap="tapScale"
+              @click="() => { tap(); settings.showMyNotes = !settings.showMyNotes; }"
+            >
+              <span class="toggle-slider"></span>
+            </motion.button>
           </label>
 
           <label class="setting-item">
@@ -71,26 +111,28 @@
               <span class="setting-name">Show Cross References</span>
               <span class="setting-desc">Display linked verses below each verse</span>
             </div>
-            <button
+            <motion.button
               class="toggle-switch"
               :class="{ active: settings.showCrossReferences }"
+              :while-tap="tapScale"
               @click="() => { tap(); settings.showCrossReferences = !settings.showCrossReferences; }"
             >
               <span class="toggle-slider"></span>
-            </button>
+            </motion.button>
           </label>
           <label class="setting-item">
             <div class="setting-label">
               <span class="setting-name">Keep Screen On</span>
               <span class="setting-desc">Prevent the screen from sleeping while reading</span>
             </div>
-            <button
+            <motion.button
               class="toggle-switch"
               :class="{ active: settings.keepScreenOn }"
+              :while-tap="tapScale"
               @click="() => { tap(); settings.keepScreenOn = !settings.keepScreenOn; }"
             >
               <span class="toggle-slider"></span>
-            </button>
+            </motion.button>
           </label>
         </div>
       </section>
@@ -102,17 +144,19 @@
           <div class="font-size-row">
             <span class="font-preview" :style="{ fontSize: settings.fontSize + 'px' }">Aa</span>
             <div class="font-controls">
-              <button
+              <motion.button
                 class="font-btn"
+                :while-tap="tapScale"
                 :disabled="settings.fontSize <= 12"
                 @click="() => { tap(); settings.fontSize -= 1; }"
-              >A−</button>
+              >A−</motion.button>
               <span class="font-size-label">{{ settings.fontSize }}px</span>
-              <button
+              <motion.button
                 class="font-btn"
+                :while-tap="tapScale"
                 :disabled="settings.fontSize >= 26"
                 @click="() => { tap(); settings.fontSize += 1; }"
-              >A+</button>
+              >A+</motion.button>
             </div>
           </div>
         </div>
@@ -122,20 +166,20 @@
       <section class="settings-section">
         <h2 class="section-title">Support</h2>
         <div class="settings-group">
-          <button class="settings-row-btn" @click="() => { tap(); showFeedback = true; }">
+          <motion.button class="settings-row-btn" :while-tap="tapScale" @click="() => { tap(); showFeedback = true; }">
             <div class="row-btn-label">
               <span class="setting-name">Send Feedback</span>
               <span class="setting-desc">Report bugs or suggest features</span>
             </div>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-          <button class="settings-row-btn" @click="() => { tap(); requestReview(); }">
+          </motion.button>
+          <motion.button class="settings-row-btn" :while-tap="tapScale" @click="() => { tap(); requestReview(); }">
             <div class="row-btn-label">
               <span class="setting-name">Rate this App</span>
               <span class="setting-desc">Enjoying RSTNE? Leave a review</span>
             </div>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          </button>
+          </motion.button>
         </div>
       </section>
 
@@ -143,18 +187,18 @@
       <section class="settings-section">
         <h2 class="section-title">Legal</h2>
         <div class="settings-group">
-          <button class="settings-row-btn" @click="openPrivacyPolicy">
+          <motion.button class="settings-row-btn" :while-tap="tapScale" @click="openPrivacyPolicy">
             <div class="row-btn-label">
               <span class="setting-name">Privacy Policy</span>
             </div>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          </button>
-          <button class="settings-row-btn" @click="openTerms">
+          </motion.button>
+          <motion.button class="settings-row-btn" :while-tap="tapScale" @click="openTerms">
             <div class="row-btn-label">
               <span class="setting-name">Terms &amp; Conditions</span>
             </div>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          </button>
+          </motion.button>
         </div>
       </section>
 
@@ -162,9 +206,24 @@
     </div>
 
     <!-- Feedback bottom sheet -->
-    <Transition name="sheet">
-      <div v-if="showFeedback" class="sheet-backdrop" @click.self="closeFeedback">
-        <div class="bottom-sheet" @click.stop>
+    <AnimatePresence>
+      <motion.div
+        v-if="showFeedback"
+        class="sheet-backdrop"
+        :initial="{ opacity: 0 }"
+        :animate="{ opacity: 1 }"
+        :exit="{ opacity: 0 }"
+        :transition="overlayFade"
+        @click.self="closeFeedback"
+      >
+        <motion.div
+          class="bottom-sheet"
+          :initial="prefersReducedMotion ? false : { y: '100%' }"
+          :animate="{ y: 0 }"
+          :exit="{ y: '100%' }"
+          :transition="sheetSpring"
+          @click.stop
+        >
           <div class="sheet-handle"></div>
           <h3 class="sheet-title">Send Feedback</h3>
 
@@ -195,34 +254,47 @@
               placeholder="Your email (optional, for follow-up)"
             />
             <p v-if="feedbackError" class="feedback-error">{{ feedbackError }}</p>
-            <button
+            <motion.button
               class="feedback-submit-btn"
+              :while-tap="tapScale"
               :disabled="feedbackSubmitting || !feedbackMessage.trim()"
               @click="doSubmitFeedback"
             >
               {{ feedbackSubmitting ? 'Sending...' : 'Send Feedback' }}
-            </button>
+            </motion.button>
           </div>
-        </div>
-      </div>
-    </Transition>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { motion, AnimatePresence } from 'motion-v';
 import { useSettings } from '@/composables/useSettings';
 import { useBookLanguage, type BookNameLanguage } from '@/composables/useBookLanguage';
+import { useAuth } from '@/composables/useAuth';
+import { useMotionPresets } from '@/composables/useMotionPresets';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { InAppReview } from '@capacitor-community/in-app-review';
 import { submitFeedback } from '@/api/feedback';
 
+const { prefersReducedMotion, sheetSpring, tapScale, overlayFade } = useMotionPresets();
+
 const APP_VERSION = '14.1.0';
 
+const router = useRouter();
 const settings = useSettings();
 const { bookNameLanguage } = useBookLanguage();
+const { user, isAdmin, signOutUser } = useAuth();
+
+async function handleSignOut() {
+  await signOutUser();
+}
 
 const langOptions: { value: BookNameLanguage; label: string }[] = [
   { value: 'english', label: 'English' },
@@ -387,6 +459,54 @@ async function doSubmitFeedback() {
   font-size: 12px;
   color: #9ca3af;
   line-height: 1.4;
+}
+
+/* Account */
+.account-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 0;
+}
+
+.account-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.account-info .setting-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-badge {
+  align-self: flex-start;
+  background: #1E40AF;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.account-action-btn {
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1.5px solid #d1d5db;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
 }
 
 /* Toggle switch */
@@ -664,21 +784,4 @@ async function doSubmitFeedback() {
   font-weight: 500;
 }
 
-/* Sheet transitions */
-.sheet-enter-active,
-.sheet-leave-active {
-  transition: opacity 0.2s;
-}
-.sheet-enter-active .bottom-sheet,
-.sheet-leave-active .bottom-sheet {
-  transition: transform 0.25s ease;
-}
-.sheet-enter-from,
-.sheet-leave-to {
-  opacity: 0;
-}
-.sheet-enter-from .bottom-sheet,
-.sheet-leave-to .bottom-sheet {
-  transform: translateY(100%);
-}
 </style>

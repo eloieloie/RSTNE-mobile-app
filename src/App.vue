@@ -1,66 +1,106 @@
 <template>
   <div class="app-shell">
     <!-- Offline banner -->
-    <div v-if="!isOnline" class="offline-banner">
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="1" y1="1" x2="23" y2="23"/>
-        <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
-        <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>
-        <path d="M10.71 5.05A16 16 0 0 1 22.56 9"/>
-        <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>
-        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
-        <line x1="12" y1="20" x2="12.01" y2="20"/>
-      </svg>
-      No internet connection
-    </div>
+    <AnimatePresence>
+      <motion.div
+        v-if="!isOnline"
+        class="offline-banner"
+        :initial="prefersReducedMotion ? false : { opacity: 0, y: -12 }"
+        :animate="{ opacity: 1, y: 0 }"
+        :exit="{ opacity: 0, y: -12 }"
+        :transition="overlayFade"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="1" y1="1" x2="23" y2="23"/>
+          <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
+          <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>
+          <path d="M10.71 5.05A16 16 0 0 1 22.56 9"/>
+          <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+          <line x1="12" y1="20" x2="12.01" y2="20"/>
+        </svg>
+        No internet connection
+      </motion.div>
+    </AnimatePresence>
 
     <div class="view-area">
       <RouterView />
     </div>
 
     <!-- Update required modal -->
-    <div v-if="showUpdateModal" class="update-overlay">
-      <div class="update-modal">
-        <div class="update-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-        </div>
-        <h2>Update Required</h2>
-        <p>A newer version of RSTNE is required to continue. Please update the app to access the latest content.</p>
-        <p class="version-info">Your version: <strong>{{ APP_VERSION }}</strong></p>
-        <a
-          href="https://play.google.com/store/apps/details?id=com.rstne.app"
-          target="_blank"
-          rel="noopener"
-          class="update-btn"
-        >Update on Play Store</a>
-      </div>
-    </div>
+    <AnimatePresence>
+      <motion.div
+        v-if="showUpdateModal"
+        class="update-overlay"
+        :initial="{ opacity: 0 }"
+        :animate="{ opacity: 1 }"
+        :exit="{ opacity: 0 }"
+        :transition="overlayFade"
+      >
+        <motion.div
+          class="update-modal"
+          :initial="prefersReducedMotion ? false : { opacity: 0, scale: 0.94, y: 8 }"
+          :animate="{ opacity: 1, scale: 1, y: 0 }"
+          :exit="{ opacity: 0, scale: 0.94, y: 8 }"
+          :transition="sheetSpring"
+        >
+          <div class="update-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <h2>Update Required</h2>
+          <p>A newer version of RSTNE is required to continue. Please update the app to access the latest content.</p>
+          <p class="version-info">Your version: <strong>{{ APP_VERSION }}</strong></p>
+          <a
+            href="https://play.google.com/store/apps/details?id=com.rstne.app"
+            target="_blank"
+            rel="noopener"
+            class="update-btn"
+          >Update on Play Store</a>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
 
     <!-- Connection issue modal: API unreachable while internet is up -->
-    <div v-if="showConnectionIssueModal" class="update-overlay" @click.self="showConnectionIssueModal = false">
-      <div class="update-modal">
-        <div class="update-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-        </div>
-        <h2>Unable to Connect</h2>
-        <p>RSTNE couldn't reach the server, but your internet connection looks fine. Please make sure you're on the latest version of the app.</p>
-        <a
-          href="https://play.google.com/store/apps/details?id=com.rstne.app"
-          target="_blank"
-          rel="noopener"
-          class="update-btn"
-        >Check for Update</a>
-        <button class="dismiss-btn" @click="showConnectionIssueModal = false">Dismiss</button>
-      </div>
-    </div>
+    <AnimatePresence>
+      <motion.div
+        v-if="showConnectionIssueModal"
+        class="update-overlay"
+        :initial="{ opacity: 0 }"
+        :animate="{ opacity: 1 }"
+        :exit="{ opacity: 0 }"
+        :transition="overlayFade"
+        @click.self="showConnectionIssueModal = false"
+      >
+        <motion.div
+          class="update-modal"
+          :initial="prefersReducedMotion ? false : { opacity: 0, scale: 0.94, y: 8 }"
+          :animate="{ opacity: 1, scale: 1, y: 0 }"
+          :exit="{ opacity: 0, scale: 0.94, y: 8 }"
+          :transition="sheetSpring"
+        >
+          <div class="update-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
+          <h2>Unable to Connect</h2>
+          <p>RSTNE couldn't reach the server, but your internet connection looks fine. Please make sure you're on the latest version of the app.</p>
+          <a
+            href="https://play.google.com/store/apps/details?id=com.rstne.app"
+            target="_blank"
+            rel="noopener"
+            class="update-btn"
+          >Check for Update</a>
+          <motion.button class="dismiss-btn" :while-tap="tapScale" @click="showConnectionIssueModal = false">Dismiss</motion.button>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
 
     <nav class="bottom-nav">
       <RouterLink to="/" class="tab-item" :class="{ active: route.name === 'books' }">
@@ -106,17 +146,20 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { RouterView, RouterLink, useRoute, useRouter } from 'vue-router';
+import { motion, AnimatePresence } from 'motion-v';
 import { getAppVersion, compareSemver } from '@/api/appVersion';
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { initPushNotifications } from '@/composables/usePushNotifications';
 import { useSettings } from '@/composables/useSettings';
+import { useMotionPresets } from '@/composables/useMotionPresets';
 
 const APP_VERSION = '14.1.0';
 
 const route = useRoute();
 const router = useRouter();
 const settings = useSettings();
+const { prefersReducedMotion, sheetSpring, tapScale, overlayFade } = useMotionPresets();
 const showUpdateModal = ref(false);
 const showConnectionIssueModal = ref(false);
 const isOnline = ref(navigator.onLine);

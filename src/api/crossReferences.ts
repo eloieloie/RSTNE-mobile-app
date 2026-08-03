@@ -1,4 +1,4 @@
-import { API_URL, API_HEADERS } from './client';
+import { API_URL, API_HEADERS, getAuthHeaders } from './client';
 
 export interface CrossReferenceData {
   cross_ref_id: number;
@@ -34,7 +34,7 @@ export async function getCrossReferences(
 }
 
 export async function getChapterVersesWithCrossRefs(chapterId: number): Promise<any[]> {
-  const response = await fetch(`${API_URL}/chapters/${chapterId}/verses-with-cross-refs`, { headers: API_HEADERS });
+  const response = await fetch(`${API_URL}/chapters/${chapterId}/verses-with-cross-refs`, { headers: await getAuthHeaders() });
   if (!response.ok) throw new Error('Failed to fetch verses with cross-references');
   return response.json();
 }

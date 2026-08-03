@@ -16,13 +16,13 @@
           autocapitalize="off"
           spellcheck="false"
         />
-        <button v-if="state.query" class="clear-btn" @click="clear">
+        <motion.button v-if="state.query" class="clear-btn" :while-tap="tapScale" @click="clear">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 6 6 18M6 6l12 12"/>
           </svg>
-        </button>
+        </motion.button>
       </div>
-      <button class="search-go-btn" :disabled="!state.query.trim() || state.searching" @click="search">Search</button>
+      <motion.button class="search-go-btn" :while-tap="tapScale" :disabled="!state.query.trim() || state.searching" @click="search">Search</motion.button>
     </header>
 
     <div v-if="state.searching" class="state-container">
@@ -37,7 +37,7 @@
       </svg>
       <p class="error-title">Search failed</p>
       <p class="error-desc">Check your network connection and try again.</p>
-      <button class="retry-btn" @click="search">Tap to retry</button>
+      <motion.button class="retry-btn" :while-tap="tapScale" @click="search">Tap to retry</motion.button>
     </div>
 
     <div v-else-if="state.searched && state.results.length === 0" class="state-container empty-text">
@@ -46,10 +46,14 @@
 
     <div v-else-if="state.results.length" class="results-scroll">
       <div class="results-count">{{ state.results.length }} result{{ state.results.length !== 1 ? 's' : '' }}</div>
-      <div
-        v-for="result in state.results"
+      <motion.div
+        v-for="(result, index) in state.results"
         :key="result.verse_id"
         class="result-card"
+        :initial="prefersReducedMotion ? false : { opacity: 0, y: 8 }"
+        :animate="{ opacity: 1, y: 0 }"
+        :transition="staggerTransition(index)"
+        :while-tap="tapScale"
         @click="openVerse(result)"
       >
         <div class="result-ref">{{ result.book_name }} {{ result.chapter_number }}:{{ result.verse_index }}</div>
@@ -59,7 +63,7 @@
           <span class="result-note-label">Note</span>
           <span v-html="formattedResult(result.note_content)"></span>
         </div>
-      </div>
+      </motion.div>
     </div>
 
     <div v-else class="state-container hint-text">
@@ -70,10 +74,13 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
+import { motion } from 'motion-v';
 import { searchVersesByText, type VerseSearchResult } from '@/api/verses';
 import { formatVerseWithPaleoBora } from '@/utils/formatVerse';
 import { searchState as state } from '@/composables/useSearchState';
+import { useMotionPresets } from '@/composables/useMotionPresets';
 
+const { prefersReducedMotion, tapScale, staggerTransition } = useMotionPresets();
 const router = useRouter();
 
 function escapeRegex(s: string) {

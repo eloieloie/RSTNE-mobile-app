@@ -6,6 +6,9 @@ export const TABLES = {
   VERSES: 'verses_tbl',
   NOTES: 'notes_tbl',
   VERSE_NOTES: 'verse_notes_tbl',
+  PERSONAL_NOTES: 'personal_notes_tbl',
+  PERSONAL_VERSE_NOTES: 'personal_verse_notes_tbl',
+  ADMIN_USERS: 'admin_users_tbl',
   VERSE_LINKS: 'verse_links_tbl',
   TAGS: 'tags_tbl',
   VERSE_TAGS: 'verse_tags_tbl',
@@ -48,6 +51,33 @@ export interface Verse {
   telugu_verse: string | null;
   dt_added: Date;
   dt_modified: Date;
+}
+
+export interface PersonalNote {
+  personal_note_id: number;
+  firebase_uid: string;
+  note_title: string | null;
+  note_content: string;
+  dt_added: Date;
+  dt_modified: Date;
+}
+
+export interface PersonalNoteInsert {
+  note_title?: string;
+  note_content: string;
+}
+
+export interface PersonalNoteUpdate {
+  note_title?: string;
+  note_content?: string;
+}
+
+export interface PersonalVerseNote {
+  personal_verse_note_id: number;
+  verse_id: number;
+  personal_note_id: number;
+  firebase_uid: string;
+  dt_added: Date;
 }
 
 export interface BookCategory {

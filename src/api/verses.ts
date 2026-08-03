@@ -1,11 +1,19 @@
 import type { Verse } from '@/utils/collectionReferences';
 import type { CrossReferenceData } from '@/api/crossReferences';
-import { API_URL, API_HEADERS } from './client';
+import { API_URL, API_HEADERS, getAuthHeaders } from './client';
 
 export interface VerseNote {
   verse_note_id: number;
   verse_id: number;
   note_id: number;
+  note_title: string | null;
+  note_content: string;
+}
+
+export interface PersonalVerseNote {
+  personal_verse_note_id: number;
+  verse_id: number;
+  personal_note_id: number;
   note_title: string | null;
   note_content: string;
 }
@@ -24,6 +32,7 @@ export interface VerseLinkData {
 export interface VerseWithLinks extends Verse {
   links?: VerseLinkData[];
   notes?: VerseNote[];
+  my_notes?: PersonalVerseNote[];
   crossReferences?: CrossReferenceData[];
 }
 
@@ -36,7 +45,7 @@ export interface VerseSearchResult extends VerseWithLinks {
 }
 
 export async function getVersesByChapterId(chapterId: number): Promise<VerseWithLinks[]> {
-  const response = await fetch(`${API_URL}/chapters/${chapterId}/verses`, { headers: API_HEADERS });
+  const response = await fetch(`${API_URL}/chapters/${chapterId}/verses`, { headers: await getAuthHeaders() });
   if (!response.ok) throw new Error('Failed to fetch verses');
   return response.json();
 }

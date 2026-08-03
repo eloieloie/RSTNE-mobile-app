@@ -2,9 +2,9 @@
   <div class="weekly-view">
     <!-- Header -->
     <header class="page-header">
-      <button class="back-btn" @click="router.push({ name: 'books' })">
+      <motion.button class="back-btn" :while-tap="tapScale" @click="router.push({ name: 'books' })">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
+      </motion.button>
       <div class="header-center">
         <div class="header-badge">52 Weeks · 12 Months · 364 Days</div>
         <h1>Turah Reading Plan</h1>
@@ -21,19 +21,22 @@
 
     <!-- Tabs -->
     <div class="tabs">
-      <button class="tab" :class="{ active: activeTab === 'weekly' }" @click="activeTab = 'weekly'">52 Weeks</button>
-      <button class="tab" :class="{ active: activeTab === 'byMonth' }" @click="activeTab = 'byMonth'">By Month</button>
-      <button class="tab tab--purple" :class="{ active: activeTab === 'roshChodesh' }" @click="activeTab = 'roshChodesh'">Rosh Chodesh</button>
+      <motion.button class="tab" :class="{ active: activeTab === 'weekly' }" :while-tap="tapScale" @click="activeTab = 'weekly'">52 Weeks</motion.button>
+      <motion.button class="tab" :class="{ active: activeTab === 'byMonth' }" :while-tap="tapScale" @click="activeTab = 'byMonth'">By Month</motion.button>
+      <motion.button class="tab tab--purple" :class="{ active: activeTab === 'roshChodesh' }" :while-tap="tapScale" @click="activeTab = 'roshChodesh'">Rosh Chodesh</motion.button>
     </div>
 
     <!-- 52-Week grid -->
     <div v-if="activeTab === 'weekly'" class="scroll-area">
-      <div
-        v-for="parasha in WEEKLY_PARASHOT"
+      <motion.div
+        v-for="(parasha, index) in WEEKLY_PARASHOT"
         :key="parasha.week"
         :ref="(el) => { if (parasha.week === currentWeek) currentCardEl = el as HTMLElement }"
         class="parasha-card"
         :class="{ 'current-week': parasha.week === currentWeek }"
+        :initial="prefersReducedMotion ? false : { opacity: 0, y: 10 }"
+        :animate="{ opacity: 1, y: 0 }"
+        :transition="staggerTransition(index)"
       >
         <div class="card-meta">
           <span class="week-badge">Week {{ parasha.week }}/52</span>
@@ -54,13 +57,13 @@
           </div>
         </div>
         <div class="card-btns">
-          <button class="read-btn torah-btn" :disabled="navLoading" @click="navigate(parasha, 'torah')">Read Turah</button>
-          <button class="read-btn nc-btn" :disabled="navLoading" @click="navigate(parasha, 'nc')">Read BC</button>
-          <button class="read-btn share-btn" :disabled="shareLoading" @click="shareParasha(parasha)">
+          <motion.button class="read-btn torah-btn" :while-tap="tapScale" :disabled="navLoading" @click="navigate(parasha, 'torah')">Read Turah</motion.button>
+          <motion.button class="read-btn nc-btn" :while-tap="tapScale" :disabled="navLoading" @click="navigate(parasha, 'nc')">Read BC</motion.button>
+          <motion.button class="read-btn share-btn" :while-tap="tapScale" :disabled="shareLoading" @click="shareParasha(parasha)">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          </button>
+          </motion.button>
         </div>
-      </div>
+      </motion.div>
     </div>
 
     <!-- By Month -->
@@ -76,11 +79,14 @@
           <span class="month-name">{{ DSS_MONTH_NAMES[month] }}</span>
           <span v-if="month === dssToday.month" class="this-month-tag">This Month</span>
         </div>
-        <div
-          v-for="parasha in parshasByMonth.get(month) || []"
+        <motion.div
+          v-for="(parasha, index) in (parshasByMonth.get(month) || [])"
           :key="parasha.week"
           class="parasha-card"
           :class="{ 'current-week': parasha.week === currentWeek }"
+          :initial="prefersReducedMotion ? false : { opacity: 0, y: 10 }"
+          :animate="{ opacity: 1, y: 0 }"
+          :transition="staggerTransition(index)"
         >
           <div class="card-meta">
             <span class="week-badge">Week {{ parasha.week }}/52</span>
@@ -101,13 +107,13 @@
             </div>
           </div>
           <div class="card-btns">
-            <button class="read-btn torah-btn" :disabled="navLoading" @click="navigate(parasha, 'torah')">Read Turah</button>
-            <button class="read-btn nc-btn" :disabled="navLoading" @click="navigate(parasha, 'nc')">Read BC</button>
-            <button class="read-btn share-btn" :disabled="shareLoading" @click="shareParasha(parasha)">
+            <motion.button class="read-btn torah-btn" :while-tap="tapScale" :disabled="navLoading" @click="navigate(parasha, 'torah')">Read Turah</motion.button>
+            <motion.button class="read-btn nc-btn" :while-tap="tapScale" :disabled="navLoading" @click="navigate(parasha, 'nc')">Read BC</motion.button>
+            <motion.button class="read-btn share-btn" :while-tap="tapScale" :disabled="shareLoading" @click="shareParasha(parasha)">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-            </button>
+            </motion.button>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
 
@@ -124,7 +130,7 @@
           :class="{ 'rc-item--current': entry.month === dssToday.month, 'rc-item--open': expandedRCMonth === entry.month }"
         >
           <!-- Tap row -->
-          <button class="rc-row" @click="expandedRCMonth = expandedRCMonth === entry.month ? null : entry.month">
+          <motion.button class="rc-row" :while-tap="tapScale" @click="expandedRCMonth = expandedRCMonth === entry.month ? null : entry.month">
             <span class="rc-badge">{{ entry.month }}M</span>
             <span class="rc-label">{{ DSS_MONTH_NAMES[entry.month] }}</span>
             <span v-if="entry.month === dssToday.month" class="rc-now-tag">This Month</span>
@@ -133,20 +139,30 @@
               fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="6 9 12 15 18 9"/>
             </svg>
-          </button>
+          </motion.button>
           <!-- Expanded refs -->
-          <div v-if="expandedRCMonth === entry.month" class="rc-refs">
-            <button
+          <AnimatePresence>
+          <motion.div
+            v-if="expandedRCMonth === entry.month"
+            class="rc-refs"
+            :initial="prefersReducedMotion ? false : { opacity: 0, y: -8 }"
+            :animate="{ opacity: 1, y: 0 }"
+            :exit="{ opacity: 0, y: -8 }"
+            :transition="{ duration: prefersReducedMotion ? 0 : 0.2 }"
+          >
+            <motion.button
               v-for="(ref, i) in entry.refs"
               :key="i"
               class="rc-ref-btn"
+              :while-tap="tapScale"
               :disabled="navLoading"
               @click="navigateRef(ref)"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
               {{ getLocalizedHaftarahLabel(ref) }}
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
+          </AnimatePresence>
         </div>
       </div>
     </div>
@@ -156,6 +172,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { motion, AnimatePresence } from 'motion-v';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { getAllBooks } from '@/api/books';
@@ -164,6 +181,9 @@ import { WEEKLY_PARASHOT, DSS_MONTH_NAMES, type Parasha, type ParashaReading } f
 import { generateReadingPlanCardImage } from '@/utils/paleoBora';
 import type { Book, Chapter } from '@/utils/collectionReferences';
 import { useBookLanguage } from '@/composables/useBookLanguage';
+import { useMotionPresets } from '@/composables/useMotionPresets';
+
+const { prefersReducedMotion, tapScale, staggerTransition } = useMotionPresets();
 
 const router = useRouter();
 const activeTab = ref<'weekly' | 'byMonth' | 'roshChodesh'>('weekly');

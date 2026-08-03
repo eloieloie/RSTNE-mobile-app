@@ -19,14 +19,14 @@
 
     <!-- Quick-access nav -->
     <div class="quick-nav">
-      <button class="quick-nav-btn reading-plan-btn" @click="router.push({ name: 'weekly-reading' })">
+      <motion.button class="quick-nav-btn reading-plan-btn" :while-tap="tapScale" @click="router.push({ name: 'weekly-reading' })">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         Reading Plan
-      </button>
-      <button class="quick-nav-btn feasts-btn" @click="router.push({ name: 'feasts' })">
+      </motion.button>
+      <motion.button class="quick-nav-btn feasts-btn" :while-tap="tapScale" @click="router.push({ name: 'feasts' })">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         Annual Feasts
-      </button>
+      </motion.button>
     </div>
 
     <div v-if="loading" class="state-container">
@@ -48,99 +48,162 @@
       <section v-if="firstCovenantBooks.length" class="category-section">
         <h2 class="category-heading first-covenant">First Covenant</h2>
         <div class="books-grid">
-          <button
-            v-for="book in firstCovenantBooks"
+          <motion.button
+            v-for="(book, index) in firstCovenantBooks"
             :key="book.book_id"
             class="book-card first-covenant-card"
+            :initial="prefersReducedMotion ? false : { opacity: 0, y: 8 }"
+            :animate="{ opacity: 1, y: 0 }"
+            :transition="staggerTransition(index)"
+            :while-tap="tapScale"
             @click="selectBook(book)"
           >
             <span class="book-name">{{ getBookName(book) }}</span>
             <span class="chapter-count">{{ book.chapter_count ?? 0 }} ch.</span>
-          </button>
+          </motion.button>
         </div>
       </section>
 
       <section v-if="newCovenantBooks.length" class="category-section">
         <h2 class="category-heading new-covenant">New Covenant</h2>
         <div class="books-grid">
-          <button
-            v-for="book in newCovenantBooks"
+          <motion.button
+            v-for="(book, index) in newCovenantBooks"
             :key="book.book_id"
             class="book-card new-covenant-card"
+            :initial="prefersReducedMotion ? false : { opacity: 0, y: 8 }"
+            :animate="{ opacity: 1, y: 0 }"
+            :transition="staggerTransition(index)"
+            :while-tap="tapScale"
             @click="selectBook(book)"
           >
             <span class="book-name">{{ getBookName(book) }}</span>
             <span class="chapter-count">{{ book.chapter_count ?? 0 }} ch.</span>
-          </button>
+          </motion.button>
         </div>
       </section>
 
       <section v-if="apocryphalBooks.length" class="category-section">
         <h2 class="category-heading apocryphal">Restored Apocryphal</h2>
         <div class="books-grid">
-          <button
-            v-for="book in apocryphalBooks"
+          <motion.button
+            v-for="(book, index) in apocryphalBooks"
             :key="book.book_id"
             class="book-card apocryphal-card"
+            :initial="prefersReducedMotion ? false : { opacity: 0, y: 8 }"
+            :animate="{ opacity: 1, y: 0 }"
+            :transition="staggerTransition(index)"
+            :while-tap="tapScale"
             @click="selectBook(book)"
           >
             <span class="book-name">{{ getBookName(book) }}</span>
             <span class="chapter-count">{{ book.chapter_count ?? 0 }} ch.</span>
-          </button>
+          </motion.button>
         </div>
       </section>
     </div>
 
     <!-- Chapter picker bottom sheet -->
-    <Transition name="sheet">
-      <div v-if="showChapterPicker" class="sheet-backdrop" @click="showChapterPicker = false">
-        <div class="bottom-sheet" @click.stop>
+    <AnimatePresence>
+      <motion.div
+        v-if="showChapterPicker"
+        class="sheet-backdrop"
+        :initial="{ opacity: 0 }"
+        :animate="{ opacity: 1 }"
+        :exit="{ opacity: 0 }"
+        :transition="overlayFade"
+        @click="showChapterPicker = false"
+      >
+        <motion.div
+          class="bottom-sheet"
+          :initial="prefersReducedMotion ? false : { y: '100%' }"
+          :animate="{ y: 0 }"
+          :exit="{ y: '100%' }"
+          :transition="sheetSpring"
+          @click.stop
+        >
           <div class="sheet-handle"></div>
           <h3 class="sheet-title">{{ pickerBook ? getBookName(pickerBook) : '' }} — Select Chapter</h3>
           <div v-if="chaptersLoading" class="sheet-loading">
             <div class="spinner"></div>
           </div>
           <div v-else class="chapter-list">
-            <button
-              v-for="ch in pickerChapters"
+            <motion.button
+              v-for="(ch, index) in pickerChapters"
               :key="ch.chapter_id"
               class="chapter-item"
+              :initial="prefersReducedMotion ? false : { opacity: 0 }"
+              :animate="{ opacity: 1 }"
+              :transition="staggerTransition(index)"
+              :while-tap="tapScale"
               @click="selectChapter(ch)"
             >
               {{ ch.chapter_number }}
-            </button>
+            </motion.button>
           </div>
-        </div>
-      </div>
-    </Transition>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
 
     <!-- Verse picker bottom sheet -->
-    <Transition name="sheet">
-      <div v-if="showVersePicker" class="sheet-backdrop" @click="showVersePicker = false">
-        <div class="bottom-sheet" @click.stop>
+    <AnimatePresence>
+      <motion.div
+        v-if="showVersePicker"
+        class="sheet-backdrop"
+        :initial="{ opacity: 0 }"
+        :animate="{ opacity: 1 }"
+        :exit="{ opacity: 0 }"
+        :transition="overlayFade"
+        @click="showVersePicker = false"
+      >
+        <motion.div
+          class="bottom-sheet"
+          :initial="prefersReducedMotion ? false : { y: '100%' }"
+          :animate="{ y: 0 }"
+          :exit="{ y: '100%' }"
+          :transition="sheetSpring"
+          @click.stop
+        >
           <div class="sheet-handle"></div>
           <h3 class="sheet-title">{{ pickerBook ? getBookName(pickerBook) : '' }} {{ pickerChapter?.chapter_number }} — Select Verse</h3>
           <div v-if="versesLoading" class="sheet-loading">
             <div class="spinner"></div>
           </div>
           <div v-else class="chapter-list">
-            <button
-              v-for="verseIndex in pickerVerseIndices"
+            <motion.button
+              v-for="(verseIndex, index) in pickerVerseIndices"
               :key="verseIndex"
               class="chapter-item"
+              :initial="prefersReducedMotion ? false : { opacity: 0 }"
+              :animate="{ opacity: 1 }"
+              :transition="staggerTransition(index)"
+              :while-tap="tapScale"
               @click="navigateToVerse(verseIndex)"
             >
               {{ verseIndex }}
-            </button>
+            </motion.button>
           </div>
-        </div>
-      </div>
-    </Transition>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
 
     <!-- First-launch onboarding overlay -->
-    <Transition name="fade">
-      <div v-if="!settings.hasSeenOnboarding" class="onboarding-overlay">
-        <div class="onboarding-card">
+    <AnimatePresence>
+      <motion.div
+        v-if="!settings.hasSeenOnboarding"
+        class="onboarding-overlay"
+        :initial="{ opacity: 0 }"
+        :animate="{ opacity: 1 }"
+        :exit="{ opacity: 0 }"
+        :transition="overlayFade"
+      >
+        <motion.div
+          class="onboarding-card"
+          :initial="prefersReducedMotion ? false : { opacity: 0, scale: 0.94, y: 8 }"
+          :animate="{ opacity: 1, scale: 1, y: 0 }"
+          :exit="{ opacity: 0, scale: 0.94, y: 8 }"
+          :transition="sheetSpring"
+        >
           <div class="onboarding-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1E40AF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
@@ -174,24 +237,28 @@
             </div>
           </div>
 
-          <button class="onboarding-btn" @click="settings.hasSeenOnboarding = true">
+          <motion.button class="onboarding-btn" :while-tap="tapScale" @click="settings.hasSeenOnboarding = true">
             Get Started
-          </button>
-        </div>
-      </div>
-    </Transition>
+          </motion.button>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { motion, AnimatePresence } from 'motion-v';
 import { getAllBooks } from '@/api/books';
 import { getChaptersByBookId } from '@/api/chapters';
 import { getVersesByChapterId } from '@/api/verses';
 import type { Book, Chapter } from '@/utils/collectionReferences';
 import { useBookLanguage, type BookNameLanguage } from '@/composables/useBookLanguage';
 import { useSettings } from '@/composables/useSettings';
+import { useMotionPresets } from '@/composables/useMotionPresets';
+
+const { prefersReducedMotion, sheetSpring, tapScale, overlayFade, staggerTransition } = useMotionPresets();
 
 const router = useRouter();
 const settings = useSettings();
@@ -612,24 +679,6 @@ onMounted(loadBooks);
   opacity: 0.7;
 }
 
-/* Transitions */
-.sheet-enter-active,
-.sheet-leave-active {
-  transition: opacity 0.2s;
-}
-.sheet-enter-active .bottom-sheet,
-.sheet-leave-active .bottom-sheet {
-  transition: transform 0.25s ease;
-}
-.sheet-enter-from,
-.sheet-leave-to {
-  opacity: 0;
-}
-.sheet-enter-from .bottom-sheet,
-.sheet-leave-to .bottom-sheet {
-  transform: translateY(100%);
-}
-
 /* Onboarding overlay */
 .onboarding-overlay {
   position: fixed;
@@ -729,13 +778,4 @@ onMounted(loadBooks);
   opacity: 0.85;
 }
 
-/* Fade transition for onboarding */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
 </style>

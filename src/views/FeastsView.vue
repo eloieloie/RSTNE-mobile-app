@@ -2,9 +2,9 @@
   <div class="feasts-view">
     <!-- Header -->
     <header class="page-header">
-      <button class="back-btn" @click="router.push({ name: 'books' })">
+      <motion.button class="back-btn" :while-tap="tapScale" @click="router.push({ name: 'books' })">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
+      </motion.button>
       <div class="header-text">
         <h1>Annual Feasts · Moadeem</h1>
         <p>YaHUaH's Appointed Times — Leviticus 23</p>
@@ -21,11 +21,14 @@
         </div>
 
         <div class="feast-cards">
-          <div
-            v-for="feast in feastsBySeason(season.id)"
+          <motion.div
+            v-for="(feast, index) in feastsBySeason(season.id)"
             :key="feast.id"
             class="feast-card"
             :style="{ '--fc': feast.color }"
+            :initial="prefersReducedMotion ? false : { opacity: 0, y: 10 }"
+            :animate="{ opacity: 1, y: 0 }"
+            :transition="staggerTransition(index)"
           >
             <div class="card-head">
               <div class="date-badge">
@@ -44,15 +47,16 @@
               <div class="refs-label">Readings</div>
               <div class="refs-list">
                 <template v-for="ref in feast.refs" :key="ref.label">
-                  <button
+                  <motion.button
                     v-if="ref.book"
                     class="ref-pill linked"
+                    :while-tap="tapScale"
                     :disabled="navLoading"
                     @click="navigateRef(ref)"
                   >
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
                     {{ ref.label }}
-                  </button>
+                  </motion.button>
                   <span v-else class="ref-pill unlinked">{{ ref.label }}</span>
                 </template>
               </div>
@@ -62,7 +66,7 @@
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
               {{ feast.note }}
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>
@@ -72,10 +76,13 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { motion } from 'motion-v';
 import { getAllBooks } from '@/api/books';
 import { getChaptersByBookId } from '@/api/chapters';
 import type { Book, Chapter } from '@/utils/collectionReferences';
+import { useMotionPresets } from '@/composables/useMotionPresets';
 
+const { prefersReducedMotion, tapScale, staggerTransition } = useMotionPresets();
 const router = useRouter();
 const navLoading = ref(false);
 const booksCache = ref<Book[]>([]);
