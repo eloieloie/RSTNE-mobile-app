@@ -1,7 +1,6 @@
 import { ref } from 'vue';
-import { onAuthStateChanged, type User } from 'firebase/auth';
-import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
-import { auth } from '@/firebase';
+import { FirebaseAuthentication, type User } from '@capacitor-firebase/authentication';
+import '@/firebase'; // ensures the Firebase app is initialized (required by the plugin's web fallback)
 import { API_URL, getAuthHeaders } from '@/api/client';
 
 interface AuthMeResponse {
@@ -35,11 +34,21 @@ async function refreshProfile() {
   }
 }
 
-// The Capacitor Firebase plugin drives native sign-in (Google) and keeps the
-// underlying JS SDK auth state in sync — onAuthStateChanged is the single
-// source of truth for reactive state on both web preview and native builds.
-onAuthStateChanged(auth, async (firebaseUser) => {
-  user.value = firebaseUser;
+// With native auth (the default — skipNativeAuth is not set), the underlying
+// Firebase JS SDK's `onAuthStateChanged` is NOT notified of native sign-ins,
+// so it must not be used here. The plugin's own `authStateChange` listener is
+// the one API that works uniformly on native (Android/iOS) and the web
+// fallback — on web it's internally wired to the JS SDK's `onAuthStateChanged`.
+FirebaseAuthentication.getCurrentUser().then(async ({ user: current }) => {
+  user.value = current;
+  await refreshProfile();
+  authReady.value = true;
+}).catch(() => {
+  authReady.value = true;
+});
+
+FirebaseAuthentication.addListener('authStateChange', async (change) => {
+  user.value = change.user;
   await refreshProfile();
   authReady.value = true;
 });

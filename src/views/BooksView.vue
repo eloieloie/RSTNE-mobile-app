@@ -371,8 +371,8 @@ onMounted(loadBooks);
 
 .page-header {
   padding: 12px 16px 10px;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--color-card);
+  border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 
@@ -391,12 +391,12 @@ onMounted(loadBooks);
 .page-header h1 {
   font-size: 20px;
   font-weight: 700;
-  color: #1a1a2e;
+  color: var(--color-foreground);
 }
 
 .page-header p {
   font-size: 11px;
-  color: #6b7280;
+  color: var(--color-muted-foreground);
   margin-top: 2px;
 }
 
@@ -409,12 +409,12 @@ onMounted(loadBooks);
 .lang-btn {
   padding: 5px 10px;
   border-radius: 6px;
-  border: 1.5px solid #d1d5db;
-  background: #f5f5f5;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-muted);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--color-muted-foreground);
   -webkit-tap-highlight-color: transparent;
   min-height: 32px;
 }
@@ -506,13 +506,13 @@ onMounted(loadBooks);
 .error-title {
   font-size: 16px;
   font-weight: 600;
-  color: #dc2626;
+  color: var(--color-error);
   margin: 4px 0 0;
 }
 
 .error-desc {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--color-muted-foreground);
   margin: 0;
 }
 
@@ -591,7 +591,7 @@ onMounted(loadBooks);
 }
 
 .book-name {
-  font-size: 12px;
+  font-size: calc(1.2rem * var(--books-font-scale));
   font-weight: 700;
   line-height: 1.3;
 }

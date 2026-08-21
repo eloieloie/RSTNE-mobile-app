@@ -143,7 +143,7 @@ function openVerse(result: VerseSearchResult) {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #f8f9fa;
+  background: var(--color-background);
   overflow: hidden;
 }
 
@@ -152,8 +152,8 @@ function openVerse(result: VerseSearchResult) {
   align-items: center;
   gap: 10px;
   padding: 12px 12px;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--color-card);
+  border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 
@@ -162,13 +162,13 @@ function openVerse(result: VerseSearchResult) {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #f3f4f6;
+  background: var(--color-muted);
   border-radius: 10px;
   padding: 8px 12px;
 }
 
 .search-icon {
-  color: #9ca3af;
+  color: var(--color-muted-foreground);
   flex-shrink: 0;
 }
 
@@ -178,16 +178,16 @@ input {
   border: none;
   outline: none;
   font-size: 15px;
-  color: #1a1a2e;
+  color: var(--color-foreground);
   min-width: 0;
 }
 
 input::placeholder {
-  color: #9ca3af;
+  color: var(--color-muted-foreground);
 }
 
 .clear-btn {
-  color: #9ca3af;
+  color: var(--color-muted-foreground);
   flex-shrink: 0;
   padding: 2px;
 }
@@ -201,7 +201,7 @@ input::placeholder {
 }
 
 .search-go-btn:disabled {
-  color: #9ca3af;
+  color: var(--color-muted-foreground);
 }
 
 .state-container {
@@ -234,13 +234,13 @@ input::placeholder {
 .error-title {
   font-size: 16px;
   font-weight: 600;
-  color: #dc2626;
+  color: var(--color-error);
   margin: 4px 0 0;
 }
 
 .error-desc {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--color-muted-foreground);
   margin: 0;
 }
 
@@ -260,7 +260,7 @@ input::placeholder {
 
 .empty-text,
 .hint-text {
-  color: #9ca3af;
+  color: var(--color-muted-foreground);
   font-size: 14px;
   padding: 20px;
   text-align: center;
@@ -275,7 +275,7 @@ input::placeholder {
 
 .results-count {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-muted-foreground);
   margin-bottom: 10px;
   padding-left: 4px;
 }

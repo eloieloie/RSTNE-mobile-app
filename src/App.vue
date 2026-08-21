@@ -153,13 +153,29 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { initPushNotifications } from '@/composables/usePushNotifications';
 import { useSettings } from '@/composables/useSettings';
 import { useMotionPresets } from '@/composables/useMotionPresets';
+import { useTheme, DARK_THEMES, THEME_OPTIONS } from '@/composables/useTheme';
 
-const APP_VERSION = '14.1.0';
+const APP_VERSION = '16.1.0';
 
 const route = useRoute();
 const router = useRouter();
 const settings = useSettings();
 const { prefersReducedMotion, sheetSpring, tapScale, overlayFade } = useMotionPresets();
+const { theme } = useTheme();
+
+function applyStatusBarForTheme() {
+  if (!Capacitor.isNativePlatform()) return;
+  const isDark = DARK_THEMES.has(theme.value);
+  // Style.Dark = light icons (for dark backgrounds); Style.Light = dark icons (for light backgrounds)
+  StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light }).catch(() => {});
+  // setBackgroundColor is Android-only; ignored/no-op on iOS
+  if (Capacitor.getPlatform() === 'android') {
+    const bgColor = THEME_OPTIONS.find(t => t.value === theme.value)?.swatch[0] ?? '#ffffff';
+    StatusBar.setBackgroundColor({ color: bgColor }).catch(() => {});
+  }
+}
+
+watch(theme, applyStatusBarForTheme);
 const showUpdateModal = ref(false);
 const showConnectionIssueModal = ref(false);
 const isOnline = ref(navigator.onLine);
@@ -193,12 +209,7 @@ onMounted(async () => {
 
   if (Capacitor.isNativePlatform()) {
     initPushNotifications(router);
-    // Style.Light = dark icons, suitable for this app's light background
-    StatusBar.setStyle({ style: Style.Light });
-    // setBackgroundColor is Android-only; ignored/no-op on iOS
-    if (Capacitor.getPlatform() === 'android') {
-      StatusBar.setBackgroundColor({ color: '#ffffff' });
-    }
+    applyStatusBarForTheme();
   }
 
   window.addEventListener('online', updateOnlineStatus);
@@ -217,6 +228,7 @@ onUnmounted(() => {
   flex-direction: column;
   height: 100%;
   padding-top: var(--safe-area-top);
+  background: var(--color-background);
 }
 
 .offline-banner {
@@ -242,8 +254,8 @@ onUnmounted(() => {
 
 .bottom-nav {
   display: flex;
-  background: #fff;
-  border-top: 1px solid #e5e7eb;
+  background: var(--color-card);
+  border-top: 1px solid var(--color-border);
   padding-bottom: var(--safe-area-bottom);
   height: calc(var(--nav-height) + var(--safe-area-bottom));
   flex-shrink: 0;
@@ -257,7 +269,7 @@ onUnmounted(() => {
   justify-content: center;
   gap: 3px;
   text-decoration: none;
-  color: #9ca3af;
+  color: var(--color-muted-foreground);
   font-size: 11px;
   font-weight: 500;
   padding: 8px 0;
@@ -265,7 +277,7 @@ onUnmounted(() => {
 }
 
 .tab-item.active {
-  color: #1E40AF;
+  color: var(--color-primary);
 }
 
 .tab-item svg {
@@ -284,7 +296,7 @@ onUnmounted(() => {
 }
 
 .update-modal {
-  background: #fff;
+  background: var(--color-card);
   border-radius: 16px;
   padding: 32px 24px;
   max-width: 320px;
@@ -297,27 +309,27 @@ onUnmounted(() => {
 }
 
 .update-icon {
-  color: #1E40AF;
+  color: var(--color-primary);
   margin-bottom: 4px;
 }
 
 .update-modal h2 {
   font-size: 20px;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-foreground);
   margin: 0;
 }
 
 .update-modal p {
   font-size: 15px;
-  color: #4b5563;
+  color: var(--color-muted-foreground);
   margin: 0;
   line-height: 1.5;
 }
 
 .update-modal .version-info {
   font-size: 13px;
-  color: #9ca3af;
+  color: var(--color-muted-foreground);
 }
 
 .update-btn {
@@ -339,7 +351,7 @@ onUnmounted(() => {
   display: inline-block;
   background: transparent;
   border: none;
-  color: #6b7280;
+  color: var(--color-muted-foreground);
   font-size: 14px;
   font-weight: 600;
   padding: 8px 24px;

@@ -284,7 +284,7 @@ function feastsBySeason(seasonId: string): Feast[] {
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  background: #f8f4ec;
+  background: var(--color-background);
 }
 
 .page-header {

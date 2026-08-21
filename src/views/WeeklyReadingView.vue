@@ -446,7 +446,7 @@ onMounted(() => {
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  background: #f8f9fb;
+  background: var(--color-background);
 }
 
 /* Header */

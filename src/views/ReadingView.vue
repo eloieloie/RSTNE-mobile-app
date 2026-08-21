@@ -101,22 +101,38 @@
             </template>
 
             <div
-              v-if="settings.showAdminNotes && verse.notes && verse.notes.length > 0"
+              v-if="settings.showAdminNotes && ((verse.notes && verse.notes.length > 0) || addingAdminNoteVerseId === verse.verse_id)"
               class="verse-notes admin-notes"
             >
-              <div class="notes-label">Admin Notes</div>
               <div
                 v-for="note in verse.notes"
                 :key="note.verse_note_id"
                 class="note-item"
               >
-                <div v-if="note.note_title" class="note-title" v-html="formatVerseWithPaleoBora(note.note_title, bookAbbreviations, getDisplayAbbr)"></div>
-                <div class="note-content" v-html="formatVerseWithPaleoBora(note.note_content, bookAbbreviations, getDisplayAbbr)"></div>
+                <template v-if="editingAdminNoteId === note.note_id">
+                  <textarea v-model="editAdminNoteContent" class="note-edit-textarea" rows="3"></textarea>
+                  <div class="note-edit-actions">
+                    <button class="note-save-btn" @click.stop="saveEditAdminNote(verse.verse_id, note.note_id)">Save</button>
+                    <button class="note-cancel-btn" @click.stop="cancelEditAdminNote">Cancel</button>
+                    <button class="note-delete-btn" @click.stop="deleteAdminNoteFromVerse(verse.verse_id, note.verse_note_id, note.note_id)">Delete</button>
+                  </div>
+                </template>
+                <template v-else>
+                  <div v-if="note.note_title" class="note-title" v-html="formatVerseWithPaleoBora(note.note_title, bookAbbreviations, getDisplayAbbr)"></div>
+                  <div class="note-content" v-html="formatVerseWithPaleoBora(note.note_content, bookAbbreviations, getDisplayAbbr)"></div>
+                </template>
+              </div>
+              <div v-if="isAdmin && addingAdminNoteVerseId === verse.verse_id" class="note-add-row">
+                <textarea v-model="newAdminNoteContent" class="note-edit-textarea" rows="3" placeholder="New admin note…"></textarea>
+                <div class="note-edit-actions">
+                  <button class="note-save-btn" @click.stop="saveNewAdminNote(verse.verse_id)">Save</button>
+                  <button class="note-cancel-btn" @click.stop="cancelAddAdminNote">Cancel</button>
+                </div>
               </div>
             </div>
 
             <div
-              v-if="settings.showMyNotes && !isAdmin && ((verse.my_notes && verse.my_notes.length > 0) || user)"
+              v-if="settings.showMyNotes && !isAdmin && ((verse.my_notes && verse.my_notes.length > 0) || addingPersonalNoteVerseId === verse.verse_id)"
               class="verse-notes my-notes"
             >
               <div class="notes-label">My Notes</div>
@@ -126,25 +142,19 @@
                   <div class="note-edit-actions">
                     <button class="note-save-btn" @click.stop="saveEditPersonalNote(verse.verse_id, note.personal_note_id)">Save</button>
                     <button class="note-cancel-btn" @click.stop="cancelEditPersonalNote">Cancel</button>
+                    <button class="note-delete-btn" @click.stop="deletePersonalNoteFromVerse(verse.verse_id, note.personal_verse_note_id, note.personal_note_id)">Delete</button>
                   </div>
                 </template>
                 <template v-else>
                   <div class="note-content" v-html="formatVerseWithPaleoBora(note.note_content, bookAbbreviations, getDisplayAbbr)"></div>
-                  <div class="note-inline-actions">
-                    <button class="note-icon-btn" title="Edit note" @click.stop="startEditPersonalNote(note)">✎</button>
-                    <button class="note-icon-btn" title="Delete note" @click.stop="deletePersonalNoteFromVerse(verse.verse_id, note.personal_verse_note_id, note.personal_note_id)">🗑</button>
-                  </div>
                 </template>
               </div>
-              <div v-if="user" class="note-add-row">
-                <template v-if="addingPersonalNoteVerseId === verse.verse_id">
-                  <textarea v-model="newPersonalNoteContent" class="note-edit-textarea" rows="3" placeholder="New personal note…"></textarea>
-                  <div class="note-edit-actions">
-                    <button class="note-save-btn" @click.stop="saveNewPersonalNote(verse.verse_id)">Save</button>
-                    <button class="note-cancel-btn" @click.stop="cancelAddPersonalNote">Cancel</button>
-                  </div>
-                </template>
-                <button v-else class="note-add-btn" @click.stop="startAddPersonalNote(verse.verse_id)">+ Add my note</button>
+              <div v-if="addingPersonalNoteVerseId === verse.verse_id" class="note-add-row">
+                <textarea v-model="newPersonalNoteContent" class="note-edit-textarea" rows="3" placeholder="New personal note…"></textarea>
+                <div class="note-edit-actions">
+                  <button class="note-save-btn" @click.stop="saveNewPersonalNote(verse.verse_id)">Save</button>
+                  <button class="note-cancel-btn" @click.stop="cancelAddPersonalNote">Cancel</button>
+                </div>
               </div>
             </div>
 
@@ -185,6 +195,54 @@
                   Share
                 </motion.button>
                 <span v-if="copiedVerseId === verse.verse_id" class="copied-feedback">Copied!</span>
+                <motion.button
+                  v-if="user && !isAdmin && (!verse.my_notes || verse.my_notes.length === 0)"
+                  class="verse-action-btn"
+                  :while-tap="tapScale"
+                  @click.stop="startAddPersonalNote(verse.verse_id)"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Add My Note
+                </motion.button>
+                <motion.button
+                  v-if="user && !isAdmin && verse.my_notes && verse.my_notes.length > 0"
+                  class="verse-action-btn"
+                  :while-tap="tapScale"
+                  @click.stop="startEditPersonalNote(verse.my_notes[0])"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  Edit My Note
+                </motion.button>
+                <motion.button
+                  v-if="isAdmin && verse.notes && verse.notes.length > 0"
+                  class="verse-action-btn"
+                  :while-tap="tapScale"
+                  @click.stop="startEditAdminNote(verse.notes[0])"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  Edit Note
+                </motion.button>
+                <motion.button
+                  v-if="isAdmin && (!verse.notes || verse.notes.length === 0)"
+                  class="verse-action-btn"
+                  :while-tap="tapScale"
+                  @click.stop="startAddAdminNote(verse.verse_id)"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Add Note
+                </motion.button>
               </div>
             </div>
           </div>
@@ -365,6 +423,7 @@ import {
   linkPersonalNoteToVerse,
   unlinkPersonalNoteFromVerse,
 } from '@/api/personalNotes';
+import { createNote, updateNote, linkNoteToVerse, unlinkNoteFromVerse } from '@/api/notes';
 
 const route = useRoute();
 const router = useRouter();
@@ -414,8 +473,82 @@ const versePickerLoading = ref(false);
 const verseIndicesCache = new Map<number, string[]>();
 const versesEl = ref<HTMLElement | null>(null);
 
-// ── My Notes (personal, per-user) ────────────────────────────────────────
+// ── Admin Notes (single shared note per verse, add/edit/delete) ───────────
 const { user, isAdmin } = useAuth();
+
+const editingAdminNoteId = ref<number | null>(null);
+const editAdminNoteContent = ref('');
+const addingAdminNoteVerseId = ref<number | null>(null);
+const newAdminNoteContent = ref('');
+
+function startEditAdminNote(note: { note_id: number; note_content: string }) {
+  editingAdminNoteId.value = note.note_id;
+  editAdminNoteContent.value = note.note_content;
+}
+
+function cancelEditAdminNote() {
+  editingAdminNoteId.value = null;
+  editAdminNoteContent.value = '';
+}
+
+async function saveEditAdminNote(verseId: number, noteId: number) {
+  const content = editAdminNoteContent.value.trim();
+  if (!content) return;
+  try {
+    await updateNote(noteId, { note_content: content });
+    const verse = verses.value.find(v => v.verse_id === verseId);
+    const note = verse?.notes?.find(n => n.note_id === noteId);
+    if (note) note.note_content = content;
+  } catch (err) {
+    console.error('Failed to update admin note:', err);
+  } finally {
+    cancelEditAdminNote();
+  }
+}
+
+async function deleteAdminNoteFromVerse(verseId: number, verseNoteId: number, noteId: number) {
+  if (!confirm('Remove this admin note from the verse?')) return;
+  try {
+    await unlinkNoteFromVerse(verseNoteId);
+    const verse = verses.value.find(v => v.verse_id === verseId);
+    if (verse?.notes) {
+      verse.notes = verse.notes.filter(n => n.note_id !== noteId);
+    }
+  } catch (err) {
+    console.error('Failed to remove admin note:', err);
+  } finally {
+    cancelEditAdminNote();
+  }
+}
+
+function startAddAdminNote(verseId: number) {
+  addingAdminNoteVerseId.value = verseId;
+  newAdminNoteContent.value = '';
+}
+
+function cancelAddAdminNote() {
+  addingAdminNoteVerseId.value = null;
+  newAdminNoteContent.value = '';
+}
+
+async function saveNewAdminNote(verseId: number) {
+  const content = newAdminNoteContent.value.trim();
+  if (!content) return;
+  try {
+    const { note_id } = await createNote({ note_content: content });
+    const { verse_note_id } = await linkNoteToVerse({ verse_id: verseId, note_id });
+    const verse = verses.value.find(v => v.verse_id === verseId);
+    if (verse) {
+      verse.notes = [...(verse.notes || []), { note_id, verse_note_id, verse_id: verseId, note_title: null, note_content: content, dt_modified: new Date() }];
+    }
+  } catch (err) {
+    console.error('Failed to add admin note:', err);
+  } finally {
+    cancelAddAdminNote();
+  }
+}
+
+// ── My Notes (personal, per-user) ────────────────────────────────────────
 
 const addingPersonalNoteVerseId = ref<number | null>(null);
 const newPersonalNoteContent = ref('');
@@ -1208,6 +1341,7 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  margin: var(--space-2) 0;
 }
 
 .note-item {
@@ -1244,41 +1378,19 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   border-left-color: #1E40AF;
 }
 
-.note-inline-actions {
-  display: flex;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-}
-
-.note-icon-btn {
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: rgba(0, 0, 0, 0.06);
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  line-height: 1;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
 .note-add-row {
   margin-top: var(--space-1);
 }
 
 .note-add-btn {
   min-height: 40px;
-  border: 1.5px dashed #b9c3d9;
+  border: 1.5px dashed var(--color-border);
   background: transparent;
   border-radius: var(--radius-sm);
   padding: var(--space-2) var(--space-3);
   font-size: var(--font-size-sm);
   font-weight: 600;
-  color: #6b7280;
+  color: var(--color-muted-foreground);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -1287,10 +1399,12 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   width: 100%;
   min-height: 64px;
   padding: var(--space-2) var(--space-3);
-  border: 1.5px solid #d1d5db;
+  border: 1.5px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-sm);
   font-family: inherit;
+  background: var(--color-card);
+  color: var(--color-foreground);
   resize: vertical;
 }
 
@@ -1324,7 +1438,21 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
 
 .note-cancel-btn {
   background: rgba(0, 0, 0, 0.08);
-  color: #333;
+  color: var(--color-foreground);
+}
+
+.note-delete-btn {
+  min-height: 36px;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: #fef2f2;
+  color: #b91c1c;
+  margin-left: auto;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Cross references */
@@ -1333,6 +1461,7 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
+  margin-top: var(--space-2);
 }
 
 .cross-refs-label {
@@ -1445,6 +1574,7 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
 .verse-actions-bar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-2);
 }
 
@@ -1546,7 +1676,7 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   aspect-ratio: 1;
   border-radius: var(--radius-lg);
   background: var(--color-muted);
-  color: var(--color-neutral-700);
+  color: var(--color-foreground);
   font-size: var(--font-size-base);
   font-weight: 600;
   display: flex;

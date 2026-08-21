@@ -26,6 +26,30 @@
         </div>
       </section>
 
+      <!-- Appearance -->
+      <section class="settings-section">
+        <h2 class="section-title">Appearance</h2>
+        <div class="settings-group">
+          <div class="theme-options">
+            <motion.button
+              v-for="opt in themeOptions"
+              :key="opt.value"
+              :class="['theme-option-btn', { active: theme === opt.value }]"
+              :while-tap="tapScale"
+              :aria-pressed="theme === opt.value"
+              @click="() => { tap(); theme = opt.value; }"
+            >
+              <span
+                class="theme-swatch"
+                :style="{ background: `linear-gradient(135deg, ${opt.swatch[0]} 50%, ${opt.swatch[1]} 50%)` }"
+                aria-hidden="true"
+              ></span>
+              <span class="theme-option-label">{{ opt.label }}</span>
+            </motion.button>
+          </div>
+        </div>
+      </section>
+
       <!-- Book Names Language -->
       <section class="settings-section">
         <h2 class="section-title">Book Names Language</h2>
@@ -277,6 +301,7 @@ import { useSettings } from '@/composables/useSettings';
 import { useBookLanguage, type BookNameLanguage } from '@/composables/useBookLanguage';
 import { useAuth } from '@/composables/useAuth';
 import { useMotionPresets } from '@/composables/useMotionPresets';
+import { useTheme } from '@/composables/useTheme';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
@@ -285,12 +310,13 @@ import { submitFeedback } from '@/api/feedback';
 
 const { prefersReducedMotion, sheetSpring, tapScale, overlayFade } = useMotionPresets();
 
-const APP_VERSION = '14.1.0';
+const APP_VERSION = '16.1.0';
 
 const router = useRouter();
 const settings = useSettings();
 const { bookNameLanguage } = useBookLanguage();
 const { user, isAdmin, signOutUser } = useAuth();
+const { theme, themeOptions } = useTheme();
 
 async function handleSignOut() {
   await signOutUser();
@@ -377,13 +403,13 @@ async function doSubmitFeedback() {
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  background: #f3f4f6;
+  background: var(--color-background);
   overflow: hidden;
 }
 
 .settings-header {
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--color-card);
+  border-bottom: 1px solid var(--color-border);
   padding: 16px 20px;
   flex-shrink: 0;
 }
@@ -391,7 +417,7 @@ async function doSubmitFeedback() {
 .settings-title {
   font-size: 22px;
   font-weight: 700;
-  color: #1a1a2e;
+  color: var(--color-foreground);
   margin: 0;
 }
 
@@ -408,7 +434,7 @@ async function doSubmitFeedback() {
 
 .settings-section {
   flex-shrink: 0;
-  background: #fff;
+  background: var(--color-card);
   border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
@@ -417,7 +443,7 @@ async function doSubmitFeedback() {
 .section-title {
   font-size: 12px;
   font-weight: 700;
-  color: #6b7280;
+  color: var(--color-muted-foreground);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   padding: 14px 16px 8px;
@@ -434,7 +460,7 @@ async function doSubmitFeedback() {
   justify-content: space-between;
   gap: 16px;
   padding: 14px 0;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--color-border);
   cursor: pointer;
 }
 
@@ -451,13 +477,13 @@ async function doSubmitFeedback() {
 
 .setting-name {
   font-size: 16px;
-  color: #1a1a2e;
+  color: var(--color-foreground);
   font-weight: 500;
 }
 
 .setting-desc {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--color-muted-foreground);
   line-height: 1.4;
 }
 
@@ -499,9 +525,9 @@ async function doSubmitFeedback() {
   min-height: 44px;
   padding: 8px 16px;
   border-radius: 10px;
-  border: 1.5px solid #d1d5db;
-  background: #f3f4f6;
-  color: #374151;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-muted);
+  color: var(--color-foreground);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -514,7 +540,7 @@ async function doSubmitFeedback() {
   position: relative;
   width: 50px;
   height: 28px;
-  background: #d1d5db;
+  background: var(--color-border);
   border-radius: 14px;
   border: none;
   cursor: pointer;
@@ -534,7 +560,7 @@ async function doSubmitFeedback() {
   left: 3px;
   width: 22px;
   height: 22px;
-  background: #fff;
+  background: var(--color-card);
   border-radius: 50%;
   transition: left 0.25s;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
@@ -553,7 +579,7 @@ async function doSubmitFeedback() {
 }
 
 .font-preview {
-  color: #1a1a2e;
+  color: var(--color-foreground);
   font-weight: 600;
   transition: font-size 0.2s;
   min-width: 48px;
@@ -580,17 +606,60 @@ async function doSubmitFeedback() {
 }
 
 .font-btn:disabled {
-  background: #d1d5db;
-  color: #9ca3af;
+  background: var(--color-border);
+  color: var(--color-muted-foreground);
   cursor: not-allowed;
 }
 
 .font-size-label {
   font-size: 15px;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-foreground);
   min-width: 44px;
   text-align: center;
+}
+
+/* Theme picker */
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  padding: 10px 0 6px;
+}
+
+.theme-option-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px;
+  border-radius: 10px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-muted);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.theme-option-btn.active {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+.theme-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0, 0, 0, 0.12);
+}
+
+.theme-option-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+}
+
+.theme-option-btn.active .theme-option-label {
+  color: var(--color-foreground);
 }
 
 .lang-options {
@@ -603,12 +672,12 @@ async function doSubmitFeedback() {
   flex: 1;
   padding: 10px 8px;
   border-radius: 10px;
-  border: 1.5px solid #d1d5db;
-  background: #f3f4f6;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-muted);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--color-muted-foreground);
   min-height: 44px;
   -webkit-tap-highlight-color: transparent;
 }
@@ -626,7 +695,7 @@ async function doSubmitFeedback() {
 .app-version {
   text-align: center;
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--color-muted-foreground);
   margin: 0;
   padding-bottom: 8px;
 }
@@ -639,7 +708,7 @@ async function doSubmitFeedback() {
   justify-content: space-between;
   gap: 12px;
   padding: 14px 0;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--color-border);
   background: none;
   border-left: none;
   border-right: none;
@@ -674,7 +743,7 @@ async function doSubmitFeedback() {
 }
 
 .bottom-sheet {
-  background: #fff;
+  background: var(--color-card);
   border-radius: 20px 20px 0 0;
   width: 100%;
   padding: 12px 20px calc(20px + var(--safe-area-bottom));
@@ -685,7 +754,7 @@ async function doSubmitFeedback() {
 .sheet-handle {
   width: 36px;
   height: 4px;
-  background: #d1d5db;
+  background: var(--color-border);
   border-radius: 2px;
   margin: 0 auto 16px;
 }
@@ -693,7 +762,7 @@ async function doSubmitFeedback() {
 .sheet-title {
   font-size: 18px;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-foreground);
   margin-bottom: 16px;
 }
 
@@ -708,11 +777,11 @@ async function doSubmitFeedback() {
   width: 100%;
   padding: 12px 14px;
   border-radius: 10px;
-  border: 1.5px solid #d1d5db;
+  border: 1.5px solid var(--color-border);
   font-size: 15px;
   font-family: inherit;
-  background: #f9fafb;
-  color: #111827;
+  background: var(--color-muted);
+  color: var(--color-foreground);
   appearance: auto;
 }
 
@@ -720,11 +789,11 @@ async function doSubmitFeedback() {
   width: 100%;
   padding: 12px 14px;
   border-radius: 10px;
-  border: 1.5px solid #d1d5db;
+  border: 1.5px solid var(--color-border);
   font-size: 15px;
   font-family: inherit;
-  background: #f9fafb;
-  color: #111827;
+  background: var(--color-muted);
+  color: var(--color-foreground);
   resize: none;
   line-height: 1.5;
 }
@@ -740,16 +809,16 @@ async function doSubmitFeedback() {
   width: 100%;
   padding: 12px 14px;
   border-radius: 10px;
-  border: 1.5px solid #d1d5db;
+  border: 1.5px solid var(--color-border);
   font-size: 15px;
   font-family: inherit;
-  background: #f9fafb;
-  color: #111827;
+  background: var(--color-muted);
+  color: var(--color-foreground);
 }
 
 .feedback-error {
   font-size: 13px;
-  color: #dc2626;
+  color: var(--color-error);
   margin: 0;
 }
 
@@ -768,7 +837,7 @@ async function doSubmitFeedback() {
 }
 
 .feedback-submit-btn:disabled {
-  background: #9ca3af;
+  background: var(--color-muted-foreground);
   cursor: not-allowed;
 }
 
@@ -779,7 +848,7 @@ async function doSubmitFeedback() {
   gap: 12px;
   padding: 24px 0;
   text-align: center;
-  color: #16a34a;
+  color: var(--color-success);
   font-size: 16px;
   font-weight: 500;
 }

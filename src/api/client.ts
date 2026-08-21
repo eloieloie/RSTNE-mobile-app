@@ -1,4 +1,4 @@
-import { auth } from '@/firebase';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 
 export const API_URL = 'https://rstne.eloi.in/api';
 
@@ -7,9 +7,14 @@ export const API_HEADERS: Record<string, string> = {
 };
 
 // Same as API_HEADERS, plus a Firebase bearer token when the user is signed in.
+// Goes through the Capacitor plugin (not the JS SDK's `auth.currentUser`) since
+// native sign-ins never populate the JS SDK's local state — see useAuth.ts.
 export async function getAuthHeaders(): Promise<Record<string, string>> {
-  const user = auth.currentUser;
-  if (!user) return { ...API_HEADERS };
-  const token = await user.getIdToken();
-  return { ...API_HEADERS, Authorization: `Bearer ${token}` };
+  try {
+    const { token } = await FirebaseAuthentication.getIdToken();
+    if (!token) return { ...API_HEADERS };
+    return { ...API_HEADERS, Authorization: `Bearer ${token}` };
+  } catch {
+    return { ...API_HEADERS };
+  }
 }
