@@ -55,13 +55,13 @@ replaceOrThrow('android/app/build.gradle', /versionCode \d+/, `versionCode ${bui
 replaceOrThrow('android/app/build.gradle', /versionName "[^"]*"/, `versionName "${marketingVersion}"`);
 
 replaceOrThrow(
-  'ios/App/App.xcodeproj/project.pbxproj',
+  'ios/App/RSTNE.xcodeproj/project.pbxproj',
   /CURRENT_PROJECT_VERSION = \d+;/g,
   `CURRENT_PROJECT_VERSION = ${buildNumber};`,
   2,
 );
 replaceOrThrow(
-  'ios/App/App.xcodeproj/project.pbxproj',
+  'ios/App/RSTNE.xcodeproj/project.pbxproj',
   /MARKETING_VERSION = [\d.]+;/g,
   `MARKETING_VERSION = ${marketingVersion};`,
   2,

@@ -8,3 +8,7 @@ dist/
 
 # Graphify knowledge-graph output (auto-regenerated on commit)
 graphify-out/
+app-store-screenshots/
+
+# Playwright MCP session output
+.playwright-mcp/
