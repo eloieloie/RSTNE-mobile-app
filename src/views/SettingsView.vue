@@ -16,6 +16,15 @@
             </div>
             <motion.button class="account-action-btn" :while-tap="tapScale" @click="() => { tap(); handleSignOut(); }">Sign Out</motion.button>
           </div>
+          <motion.button
+            v-if="user"
+            class="delete-account-btn"
+            :while-tap="tapScale"
+            :disabled="deletingAccount"
+            @click="() => { tap(); handleDeleteAccount(); }"
+          >
+            {{ deletingAccount ? 'Deleting…' : 'Delete Account' }}
+          </motion.button>
           <motion.button v-else class="settings-row-btn" :while-tap="tapScale" @click="() => { tap(); router.push('/login'); }">
             <div class="row-btn-label">
               <span class="setting-name">Sign In / Register</span>
@@ -315,11 +324,31 @@ const APP_VERSION = '18.1.0';
 const router = useRouter();
 const settings = useSettings();
 const { bookNameLanguage } = useBookLanguage();
-const { user, isAdmin, signOutUser } = useAuth();
+const { user, isAdmin, signOutUser, deleteAccount } = useAuth();
 const { theme, themeOptions } = useTheme();
 
 async function handleSignOut() {
   await signOutUser();
+}
+
+const deletingAccount = ref(false);
+
+async function handleDeleteAccount() {
+  if (!confirm('Delete your account? This permanently removes your personal notes and settings and cannot be undone.')) return;
+  deletingAccount.value = true;
+  try {
+    await deleteAccount();
+    router.push('/');
+  } catch (err) {
+    const code = (err as { code?: string })?.code;
+    if (code === 'auth/requires-recent-login') {
+      alert('For your security, please sign out, sign back in, and try deleting your account again.');
+    } else {
+      alert('Failed to delete account. Please try again.');
+    }
+  } finally {
+    deletingAccount.value = false;
+  }
 }
 
 const langOptions: { value: BookNameLanguage; label: string }[] = [
@@ -533,6 +562,26 @@ async function doSubmitFeedback() {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   flex-shrink: 0;
+}
+
+.delete-account-btn {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 0;
+  margin-top: -4px;
+  border: none;
+  background: transparent;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.delete-account-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 /* Toggle switch */

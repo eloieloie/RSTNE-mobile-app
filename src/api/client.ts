@@ -11,6 +11,10 @@ export const API_HEADERS: Record<string, string> = {
 // native sign-ins never populate the JS SDK's local state — see useAuth.ts.
 export async function getAuthHeaders(): Promise<Record<string, string>> {
   try {
+    // getIdToken() throws when no user is signed in (logged natively as a
+    // RuntimeError), so check first to avoid that on every signed-out request.
+    const { user } = await FirebaseAuthentication.getCurrentUser();
+    if (!user) return { ...API_HEADERS };
     const { token } = await FirebaseAuthentication.getIdToken();
     if (!token) return { ...API_HEADERS };
     return { ...API_HEADERS, Authorization: `Bearer ${token}` };

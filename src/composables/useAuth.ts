@@ -69,6 +69,22 @@ async function signOutUser(): Promise<void> {
   await FirebaseAuthentication.signOut();
 }
 
+// Erases the signed-in user's server-side data (personal notes, settings,
+// admin claim), then deletes the Firebase Auth account itself. Firebase may
+// reject the deletion with `auth/requires-recent-login` if the session is
+// old — callers should ask the user to sign in again and retry in that case.
+async function deleteAccount(): Promise<void> {
+  const response = await fetch(`${API_URL}/auth/account`, {
+    method: 'POST',
+    headers: { ...(await getAuthHeaders()), 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'DELETE' },
+    body: '{}',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to delete account data');
+  }
+  await FirebaseAuthentication.deleteUser();
+}
+
 async function claimAdmin(): Promise<void> {
   const response = await fetch(`${API_URL}/auth/claim-admin`, {
     method: 'POST',
@@ -91,6 +107,7 @@ export function useAuth() {
     signInEmail,
     signInGoogle,
     signOutUser,
+    deleteAccount,
     claimAdmin,
   };
 }
