@@ -15,6 +15,9 @@ export const TABLES = {
   CROSS_REFERENCES: 'cross_references_tbl',
 } as const;
 
+export type VerseAudioLanguage = 'en' | 'te' | 'he';
+export type VerseAudioStatus = 'pending' | 'ready' | 'stale' | 'failed';
+
 export interface Book {
   book_id: number;
   book_name: string;

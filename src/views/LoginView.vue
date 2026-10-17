@@ -42,6 +42,13 @@
 
       <div class="auth-divider"><span>or</span></div>
 
+      <button type="button" class="apple-btn" :disabled="submitting" @click="handleApple">
+        <svg viewBox="0 0 17 20" width="17" height="20" aria-hidden="true">
+          <path fill="#fff" d="M14.07 10.65c-.02-2.03 1.66-3 1.74-3.05-.95-1.38-2.42-1.57-2.94-1.59-1.25-.13-2.4.73-3.02.73-.63 0-1.59-.71-2.6-.69-1.34.02-2.57.78-3.25 1.98-1.39 2.41-.36 5.97 1 7.92.66.95 1.45 2.01 2.48 1.97 1-.04 1.38-.65 2.59-.65 1.21 0 1.55.65 2.6.63 1.07-.02 1.75-.98 2.41-1.93.75-1.09 1.06-2.15 1.08-2.21-.02-.01-2.07-.8-2.09-3.11zM11.6 3.85c.56-.68.93-1.62.83-2.56-.8.03-1.77.53-2.35 1.21-.52.6-.97 1.57-.85 2.49.9.07 1.82-.46 2.37-1.14z"/>
+        </svg>
+        Continue with Apple
+      </button>
+
       <button type="button" class="google-btn" :disabled="submitting" @click="handleGoogle">
         <svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true">
           <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/>
@@ -65,7 +72,7 @@ import { useRouter } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
 
 const router = useRouter();
-const { signInEmail, signInGoogle } = useAuth();
+const { signInEmail, signInGoogle, signInApple } = useAuth();
 
 const email = ref('');
 const password = ref('');
@@ -107,6 +114,22 @@ async function handleGoogle() {
     await signInGoogle();
     router.replace('/settings');
   } catch (err) {
+    console.error('[Auth] signInGoogle failed:', (err as Error)?.message, (err as { code?: string })?.code);
+    const message = friendlyError(err);
+    if (message) errorMessage.value = message;
+  } finally {
+    submitting.value = false;
+  }
+}
+
+async function handleApple() {
+  errorMessage.value = '';
+  submitting.value = true;
+  try {
+    await signInApple();
+    router.replace('/settings');
+  } catch (err) {
+    console.error('[Auth] signInApple failed:', (err as Error)?.message, (err as { code?: string })?.code);
     const message = friendlyError(err);
     if (message) errorMessage.value = message;
   } finally {
@@ -290,6 +313,25 @@ async function handleGoogle() {
   font-size: 15px;
   cursor: pointer;
   font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.apple-btn {
+  width: 100%;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: none;
+  border-radius: 12px;
+  background: #000;
+  color: #fff;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  font-family: inherit;
+  margin-bottom: 12px;
   -webkit-tap-highlight-color: transparent;
 }
 

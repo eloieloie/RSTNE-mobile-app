@@ -1,6 +1,6 @@
 require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
 
-platform :ios, '14.0'
+platform :ios, '15.6'
 use_frameworks!
 
 # workaround to avoid Xcode caching of Pods that requires
@@ -24,10 +24,27 @@ def capacitor_pods
 end
 
 target 'RSTNE' do
+  project 'RSTNE.xcodeproj'
   capacitor_pods
   # Add your Pods here
+  # `npx cap sync` regenerates the bare pod line above on every run, so the
+  # Google subspec (needed for Sign in with Google) is declared separately
+  # here instead, where it survives re-syncs.
+  pod 'CapacitorFirebaseAuthentication/Google', :path => '../../node_modules/@capacitor-firebase/authentication'
 end
 
 post_install do |installer|
   assertDeploymentTarget(installer)
+
+  # Capacitor's own pods pin IPHONEOS_DEPLOYMENT_TARGET = 14.0 in their podspecs,
+  # which overrides the `platform :ios, '15.6'` project default at the target
+  # level. Raise every pod target to match (newer Xcode toolchains no longer
+  # support building against 14.0).
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 15.6
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.6'
+      end
+    end
+  end
 end

@@ -65,6 +65,10 @@ async function signInGoogle(): Promise<void> {
   await FirebaseAuthentication.signInWithGoogle();
 }
 
+async function signInApple(): Promise<void> {
+  await FirebaseAuthentication.signInWithApple({ scopes: ['email', 'name'] });
+}
+
 async function signOutUser(): Promise<void> {
   await FirebaseAuthentication.signOut();
 }
@@ -106,6 +110,7 @@ export function useAuth() {
     registerEmail,
     signInEmail,
     signInGoogle,
+    signInApple,
     signOutUser,
     deleteAccount,
     claimAdmin,

@@ -33,5 +33,13 @@ export function formatVerseWithPaleoBora(
     });
   }
 
+  // Same-chapter forward/back references like "(→ v.2)" or "(→ v.10-21)" — scroll
+  // to that verse within the current chapter. Only the first verse of a range is
+  // used as the scroll target, unlike the #BookAbbr links above which cross into
+  // a different book/chapter.
+  result = result.replace(/\(→\s*v\.(\d+)(?:-\d+)?\)/gi, (match, verseIndex) => {
+    return `<a href="#" class="inline-same-chapter-ref" data-target-verse-index="${verseIndex}">${match}</a>`;
+  });
+
   return result;
 }

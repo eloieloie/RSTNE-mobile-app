@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'com.rstne.app',
+  appId: 'in.eloi.rstne',
   appName: 'RSTNE',
   webDir: 'dist',
   server: {
@@ -18,6 +18,9 @@ const config: CapacitorConfig = {
     },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
+    },
+    FirebaseAuthentication: {
+      providers: ['apple.com', 'google.com'],
     },
   },
 }

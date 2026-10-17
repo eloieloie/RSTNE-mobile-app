@@ -6,26 +6,10 @@
 
     <div class="settings-body">
       <!-- Account -->
-      <section class="settings-section">
+      <section v-if="!user" class="settings-section">
         <h2 class="section-title">Account</h2>
         <div class="settings-group">
-          <div v-if="user" class="account-row">
-            <div class="account-info">
-              <span class="setting-name">{{ user.email }}</span>
-              <span v-if="isAdmin" class="admin-badge">Admin</span>
-            </div>
-            <motion.button class="account-action-btn" :while-tap="tapScale" @click="() => { tap(); handleSignOut(); }">Sign Out</motion.button>
-          </div>
-          <motion.button
-            v-if="user"
-            class="delete-account-btn"
-            :while-tap="tapScale"
-            :disabled="deletingAccount"
-            @click="() => { tap(); handleDeleteAccount(); }"
-          >
-            {{ deletingAccount ? 'Deleting…' : 'Delete Account' }}
-          </motion.button>
-          <motion.button v-else class="settings-row-btn" :while-tap="tapScale" @click="() => { tap(); router.push('/login'); }">
+          <motion.button class="settings-row-btn" :while-tap="tapScale" @click="() => { tap(); router.push('/login'); }">
             <div class="row-btn-label">
               <span class="setting-name">Sign In / Register</span>
               <span class="setting-desc">Optional — keep personal notes across devices</span>
@@ -71,6 +55,41 @@
               :while-tap="tapScale"
               @click="bookNameLanguage = opt.value"
             >{{ opt.label }}</motion.button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Audio Language -->
+      <section class="settings-section">
+        <h2 class="section-title">Audio Language</h2>
+        <div class="settings-group">
+          <div class="lang-options">
+            <motion.button
+              v-for="opt in audioLangOptions"
+              :key="opt.value"
+              :class="['lang-option-btn', { active: audioLang === opt.value }]"
+              :while-tap="tapScale"
+              @click="audioLang = opt.value"
+            >{{ opt.label }}</motion.button>
+          </div>
+          <p class="setting-desc" style="margin-top: 4px;">Used when playing chapter audio. Tap the play button in the reading nav bar to start.</p>
+        </div>
+      </section>
+
+      <!-- Playback Speed -->
+      <section class="settings-section">
+        <h2 class="section-title">Playback Speed</h2>
+        <div class="settings-group">
+          <div class="speed-slider-row">
+            <input
+              type="range"
+              class="speed-slider"
+              min="0.85"
+              max="1.15"
+              step="0.05"
+              v-model.number="audioSpeed"
+            />
+            <span class="speed-slider-value">{{ audioSpeed.toFixed(2) }}x</span>
           </div>
         </div>
       </section>
@@ -235,6 +254,28 @@
         </div>
       </section>
 
+      <!-- Account (signed in) -->
+      <section v-if="user" class="settings-section">
+        <h2 class="section-title">Account</h2>
+        <div class="settings-group">
+          <div class="account-row">
+            <div class="account-info">
+              <span class="setting-name">{{ user.email }}</span>
+              <span v-if="isAdmin" class="admin-badge">Admin</span>
+            </div>
+            <motion.button class="account-action-btn" :while-tap="tapScale" @click="() => { tap(); handleSignOut(); }">Sign Out</motion.button>
+          </div>
+          <motion.button
+            class="delete-account-btn"
+            :while-tap="tapScale"
+            :disabled="deletingAccount"
+            @click="() => { tap(); handleDeleteAccount(); }"
+          >
+            {{ deletingAccount ? 'Deleting…' : 'Delete Account' }}
+          </motion.button>
+        </div>
+      </section>
+
       <p class="app-version">Version {{ APP_VERSION }}</p>
     </div>
 
@@ -308,6 +349,9 @@ import { useRouter } from 'vue-router';
 import { motion, AnimatePresence } from 'motion-v';
 import { useSettings } from '@/composables/useSettings';
 import { useBookLanguage, type BookNameLanguage } from '@/composables/useBookLanguage';
+import { useAudioLanguage } from '@/composables/useAudioLanguage';
+import { useAudioSpeed } from '@/composables/useAudioSpeed';
+import type { VerseAudioLanguage } from '@/utils/collectionReferences';
 import { useAuth } from '@/composables/useAuth';
 import { useMotionPresets } from '@/composables/useMotionPresets';
 import { useTheme } from '@/composables/useTheme';
@@ -319,11 +363,13 @@ import { submitFeedback } from '@/api/feedback';
 
 const { prefersReducedMotion, sheetSpring, tapScale, overlayFade } = useMotionPresets();
 
-const APP_VERSION = '18.1.0';
+const APP_VERSION = '19.1.0';
 
 const router = useRouter();
 const settings = useSettings();
 const { bookNameLanguage } = useBookLanguage();
+const { audioLang } = useAudioLanguage();
+const { audioSpeed } = useAudioSpeed();
 const { user, isAdmin, signOutUser, deleteAccount } = useAuth();
 const { theme, themeOptions } = useTheme();
 
@@ -355,6 +401,12 @@ const langOptions: { value: BookNameLanguage; label: string }[] = [
   { value: 'english', label: 'English' },
   { value: 'hebrew', label: 'Hebrew' },
   { value: 'telugu', label: 'Telugu' },
+];
+
+const audioLangOptions: { value: VerseAudioLanguage; label: string }[] = [
+  { value: 'en', label: 'English' },
+  { value: 'te', label: 'Telugu' },
+  { value: 'he', label: 'Hebrew' },
 ];
 
 // Haptic feedback
@@ -715,6 +767,28 @@ async function doSubmitFeedback() {
   display: flex;
   gap: 8px;
   padding: 10px 0 6px;
+}
+
+.speed-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0 6px;
+}
+
+.speed-slider {
+  flex: 1;
+  accent-color: #1E40AF;
+  min-height: 44px;
+}
+
+.speed-slider-value {
+  min-width: 52px;
+  text-align: right;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-foreground);
+  font-variant-numeric: tabular-nums;
 }
 
 .lang-option-btn {
