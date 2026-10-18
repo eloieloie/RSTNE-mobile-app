@@ -41,5 +41,15 @@ export function formatVerseWithPaleoBora(
     return `<a href="#" class="inline-same-chapter-ref" data-target-verse-index="${verseIndex}">${match}</a>`;
   });
 
+  // Strong's numbers kept in square brackets ("[H6086]", "[H6086 H6471]") become
+  // tappable; ReadingView opens the lexicon sheet. A span (not an anchor) so
+  // views without a handler, like search, are left inert.
+  result = result.replace(/\[((?:[HG]\d{1,4}[a-z]?)(?:[\s,;/]+[HG]\d{1,4}[a-z]?)*)\]/g, (_m, codes: string) => {
+    const linked = codes.replace(/[HG]\d{1,4}[a-z]?/g, (code) =>
+      `<span class="strongs-ref" role="button" data-strongs="${code}">${code}</span>`
+    );
+    return `<span class="strongs-group">[${linked}]</span>`;
+  });
+
   return result;
 }

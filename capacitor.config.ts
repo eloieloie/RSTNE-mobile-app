@@ -7,6 +7,23 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: 'https',
   },
+  android: {
+    // Android 15+ forces edge-to-edge (targetSdk 35+): inset the WebView by the system bars.
+    adjustMarginsForEdgeToEdge: 'auto',
+    // @capacitor/status-bar is iOS-only here: its Android code uses APIs deprecated in Android 15.
+    // Android status bar styling lives in SystemBarsPlugin.java.
+    includePlugins: [
+      '@capacitor-community/in-app-review',
+      '@capacitor-firebase/authentication',
+      '@capacitor/app',
+      '@capacitor/browser',
+      '@capacitor/filesystem',
+      '@capacitor/haptics',
+      '@capacitor/keyboard',
+      '@capacitor/push-notifications',
+      '@capacitor/share',
+    ],
+  },
   plugins: {
     StatusBar: {
       style: 'Light',

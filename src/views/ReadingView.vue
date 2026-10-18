@@ -339,6 +339,53 @@
       </motion.div>
     </AnimatePresence>
 
+    <!-- Strong's lexicon bottom sheet -->
+    <AnimatePresence>
+      <motion.div
+        v-if="strongsSheet.show"
+        class="sheet-backdrop"
+        :initial="{ opacity: 0 }"
+        :animate="{ opacity: 1 }"
+        :exit="{ opacity: 0 }"
+        :transition="{ duration: prefersReducedMotion ? 0 : 0.18 }"
+        @click="strongsSheet.show = false"
+      >
+        <motion.div
+          class="bottom-sheet cross-ref-sheet"
+          :initial="{ y: '100%' }"
+          :animate="{ y: 0 }"
+          :exit="{ y: '100%' }"
+          :transition="sheetSpring"
+          @click.stop
+        >
+          <div class="sheet-handle"></div>
+          <div class="sheet-header-row">
+            <h3 class="sheet-title">{{ strongsSheet.code }} · {{ strongsSheet.code.startsWith('H') ? 'Hebrew' : 'Greek' }}</h3>
+            <button v-if="strongsSheet.trail.length" class="strongs-back" type="button" @click="strongsBack">← {{ strongsSheet.trail[strongsSheet.trail.length - 1] }}</button>
+          </div>
+          <div class="cross-ref-body">
+            <div v-if="strongsSheet.loading" class="cross-ref-loading">
+              <div class="spinner"></div>
+            </div>
+            <p v-else-if="!strongsSheet.entry" class="cross-ref-empty">No lexicon entry found for {{ strongsSheet.code }}.</p>
+            <div v-else class="strongs-body">
+              <p class="strongs-lemma" :dir="strongsSheet.code.startsWith('H') ? 'rtl' : 'ltr'">{{ strongsSheet.entry.l }}</p>
+              <p class="strongs-translit"><em>{{ strongsSheet.entry.x }}</em><span v-if="strongsSheet.entry.p" class="strongs-muted"> · {{ strongsSheet.entry.p }}</span></p>
+              <p v-if="strongsSheet.entry.s" class="strongs-def">{{ strongsSheet.entry.s }}</p>
+              <p v-if="strongsSheet.entry.k" class="strongs-field"><span class="strongs-label">KJV usage</span>{{ strongsSheet.entry.k }}</p>
+              <p v-if="strongsSheet.entry.d" class="strongs-field">
+                <span class="strongs-label">Derivation</span>
+                <template v-for="(seg, i) in strongsDerivation" :key="i">
+                  <button v-if="seg.code" type="button" class="strongs-link" @click="openStrongs(seg.text, true)">{{ seg.text }}</button>
+                  <template v-else>{{ seg.text }}</template>
+                </template>
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+
     <!-- Chapter picker bottom sheet -->
     <AnimatePresence>
       <motion.div
@@ -437,6 +484,7 @@ import { getChapterAudio } from '@/api/verseAudio';
 import { getChapterAnnouncement } from '@/api/chapterAnnouncements';
 import { searchState } from '@/composables/useSearchState';
 import { formatVerseWithPaleoBora } from '@/utils/formatVerse';
+import { lookupStrongs, type StrongsEntry } from '@/composables/useStrongsLexicon';
 import { generateVerseCardImage, stripHtmlKeepPaleo } from '@/utils/paleoBora';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
@@ -661,6 +709,53 @@ const crossRefSheet = ref({
   targetVerseIndex: null as string | null,
 });
 
+const strongsSheet = ref({
+  show: false,
+  loading: false,
+  code: '',
+  entry: null as StrongsEntry | null,
+  trail: [] as string[],
+});
+
+const strongsDerivation = computed(() => {
+  const text = strongsSheet.value.entry?.d ?? '';
+  const out: { text: string; code: boolean }[] = [];
+  let last = 0;
+  for (const m of text.matchAll(/\b[HG]\d{1,4}\b/g)) {
+    const start = m.index ?? 0;
+    if (start > last) out.push({ text: text.slice(last, start), code: false });
+    out.push({ text: m[0], code: true });
+    last = start + m[0].length;
+  }
+  if (last < text.length) out.push({ text: text.slice(last), code: false });
+  return out;
+});
+
+async function openStrongs(code: string, push = false, keepTrail = false) {
+  const sheet = strongsSheet.value;
+  if (push) sheet.trail.push(sheet.code);
+  else if (!keepTrail) sheet.trail = [];
+  const clean = code.replace(/[a-z]$/, '');
+  sheet.show = true;
+  sheet.loading = true;
+  sheet.code = clean;
+  sheet.entry = null;
+  try {
+    const entry = await lookupStrongs(clean);
+    // Ignore a stale response if the user already moved on to another code.
+    if (strongsSheet.value.code === clean) strongsSheet.value.entry = entry;
+  } catch {
+    // leave entry null → "No lexicon entry" message
+  } finally {
+    if (strongsSheet.value.code === clean) strongsSheet.value.loading = false;
+  }
+}
+
+function strongsBack() {
+  const prev = strongsSheet.value.trail.pop();
+  if (prev) void openStrongs(prev, false, true);
+}
+
 const allBooks = ref<Book[]>([]);
 
 function getDisplayAbbr(bookId: number, originalAbbr: string): string {
@@ -785,6 +880,16 @@ function handleCrossRefBodyClick(e: MouseEvent) {
 
 function handleInlineVerseClick(e: MouseEvent) {
   const target = e.target as HTMLElement;
+
+  // Strong's number — open the lexicon sheet.
+  if (target.classList.contains('strongs-ref')) {
+    e.preventDefault();
+    e.stopPropagation();
+    const code = target.getAttribute('data-strongs');
+    if (code) void openStrongs(code);
+    return;
+  }
+
   if (target.tagName !== 'A') return;
 
   if (target.classList.contains('inline-same-chapter-ref')) {
@@ -1755,6 +1860,53 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   font-size: 0.72em;
   vertical-align: super;
   line-height: 0;
+}
+
+/* Strong's numbers: small superscript tap targets inside verse text */
+.verse-text :deep(.strongs-group),
+.verse-telugu :deep(.strongs-group),
+.note-content :deep(.strongs-group),
+.cross-ref-verse :deep(.strongs-group) {
+  font-size: 0.68em;
+  vertical-align: super;
+  line-height: 0;
+  color: var(--color-muted-foreground);
+  font-weight: 400;
+}
+
+.verse-text :deep(.strongs-ref),
+.verse-telugu :deep(.strongs-ref),
+.note-content :deep(.strongs-ref),
+.cross-ref-verse :deep(.strongs-ref) {
+  border-bottom: 1px dotted currentColor;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Strong's lexicon sheet */
+.strongs-back,
+.strongs-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-primary);
+  font: inherit;
+  text-decoration: underline dotted;
+  -webkit-tap-highlight-color: transparent;
+}
+.strongs-back { font-size: var(--font-size-sm); padding: 4px var(--space-2); }
+.strongs-link { font-weight: 600; }
+.strongs-lemma { margin: 0; font-size: 2rem; line-height: 1.3; color: var(--color-foreground); }
+.strongs-translit { margin: 4px 0 var(--space-3); font-size: var(--font-size-base); color: var(--color-foreground); }
+.strongs-muted { color: var(--color-muted-foreground); }
+.strongs-def { margin: 0 0 var(--space-3); font-size: var(--font-size-base); line-height: 1.5; color: var(--color-foreground); }
+.strongs-field { margin: 0 0 var(--space-3); font-size: var(--font-size-sm); line-height: 1.5; color: var(--color-foreground); }
+.strongs-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
 }
 
 /* Same-chapter "(→ v.N)" forward/back references — keep the verse text's own

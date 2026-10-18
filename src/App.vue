@@ -150,12 +150,13 @@ import { motion, AnimatePresence } from 'motion-v';
 import { getAppVersion, compareSemver } from '@/api/appVersion';
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
+import { SystemBars } from '@/utils/systemBars';
 import { initPushNotifications } from '@/composables/usePushNotifications';
 import { useSettings } from '@/composables/useSettings';
 import { useMotionPresets } from '@/composables/useMotionPresets';
 import { useTheme, DARK_THEMES, THEME_OPTIONS } from '@/composables/useTheme';
 
-const APP_VERSION = '19.1.0';
+const APP_VERSION = '21.1.0';
 
 const route = useRoute();
 const router = useRouter();
@@ -166,13 +167,15 @@ const { theme } = useTheme();
 function applyStatusBarForTheme() {
   if (!Capacitor.isNativePlatform()) return;
   const isDark = DARK_THEMES.has(theme.value);
+  if (Capacitor.getPlatform() === 'android') {
+    // @capacitor/status-bar is excluded on Android (deprecated edge-to-edge APIs); use our own plugin.
+    const bgColor = THEME_OPTIONS.find(t => t.value === theme.value)?.swatch[0] ?? '#ffffff';
+    SystemBars.setStyle({ style: isDark ? 'dark' : 'light' }).catch(() => {});
+    SystemBars.setBackgroundColor({ color: bgColor }).catch(() => {});
+    return;
+  }
   // Style.Dark = light icons (for dark backgrounds); Style.Light = dark icons (for light backgrounds)
   StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light }).catch(() => {});
-  // setBackgroundColor is Android-only; ignored/no-op on iOS
-  if (Capacitor.getPlatform() === 'android') {
-    const bgColor = THEME_OPTIONS.find(t => t.value === theme.value)?.swatch[0] ?? '#ffffff';
-    StatusBar.setBackgroundColor({ color: bgColor }).catch(() => {});
-  }
 }
 
 watch(theme, applyStatusBarForTheme);

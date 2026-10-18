@@ -363,7 +363,7 @@ import { submitFeedback } from '@/api/feedback';
 
 const { prefersReducedMotion, sheetSpring, tapScale, overlayFade } = useMotionPresets();
 
-const APP_VERSION = '19.1.0';
+const APP_VERSION = '21.1.0';
 
 const router = useRouter();
 const settings = useSettings();
