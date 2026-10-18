@@ -1,14 +1,12 @@
 import { registerPlugin } from '@capacitor/core';
 
 /**
- * Android-only native plugin (android/app/.../SystemBarsPlugin.java).
- * Replaces @capacitor/status-bar on Android, which relies on APIs
- * deprecated by Android 15 edge-to-edge.
+ * Android-only native plugin (android/app/.../SystemBarColorPlugin.java).
+ * Paints the area behind the transparent system bars with the active theme's colour.
+ * Icon contrast is handled by Capacitor's core SystemBars plugin.
  */
-export interface SystemBarsPlugin {
-  /** 'dark' = light icons (dark background); 'light' = dark icons (light background). */
-  setStyle(options: { style: 'dark' | 'light' }): Promise<void>;
+export interface SystemBarColorPlugin {
   setBackgroundColor(options: { color: string }): Promise<void>;
 }
 
-export const SystemBars = registerPlugin<SystemBarsPlugin>('SystemBars');
+export const SystemBarColor = registerPlugin<SystemBarColorPlugin>('SystemBarColor');

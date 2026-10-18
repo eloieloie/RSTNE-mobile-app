@@ -148,9 +148,9 @@ import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { RouterView, RouterLink, useRoute, useRouter } from 'vue-router';
 import { motion, AnimatePresence } from 'motion-v';
 import { getAppVersion, compareSemver } from '@/api/appVersion';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, SystemBars, SystemBarsStyle } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
-import { SystemBars } from '@/utils/systemBars';
+import { SystemBarColor } from '@/utils/systemBars';
 import { initPushNotifications } from '@/composables/usePushNotifications';
 import { useSettings } from '@/composables/useSettings';
 import { useMotionPresets } from '@/composables/useMotionPresets';
@@ -168,10 +168,12 @@ function applyStatusBarForTheme() {
   if (!Capacitor.isNativePlatform()) return;
   const isDark = DARK_THEMES.has(theme.value);
   if (Capacitor.getPlatform() === 'android') {
-    // @capacitor/status-bar is excluded on Android (deprecated edge-to-edge APIs); use our own plugin.
     const bgColor = THEME_OPTIONS.find(t => t.value === theme.value)?.swatch[0] ?? '#ffffff';
-    SystemBars.setStyle({ style: isDark ? 'dark' : 'light' }).catch(() => {});
-    SystemBars.setBackgroundColor({ color: bgColor }).catch(() => {});
+    // Icon contrast via core SystemBars; colour behind the bars via our SystemBarColor plugin
+    // (@capacitor/status-bar is excluded on Android: it uses APIs deprecated in Android 15).
+    SystemBars.setStyle({ style: isDark ? SystemBarsStyle.Dark : SystemBarsStyle.Light })
+      .then(() => SystemBarColor.setBackgroundColor({ color: bgColor }))
+      .catch(() => {});
     return;
   }
   // Style.Dark = light icons (for dark backgrounds); Style.Light = dark icons (for light backgrounds)

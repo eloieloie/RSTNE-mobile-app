@@ -8,10 +8,8 @@ const config: CapacitorConfig = {
     androidScheme: 'https',
   },
   android: {
-    // Android 15+ forces edge-to-edge (targetSdk 35+): inset the WebView by the system bars.
-    adjustMarginsForEdgeToEdge: 'auto',
     // @capacitor/status-bar is iOS-only here: its Android code uses APIs deprecated in Android 15.
-    // Android status bar styling lives in SystemBarsPlugin.java.
+    // Android status bar styling uses core SystemBars + SystemBarColorPlugin.java.
     includePlugins: [
       '@capacitor-community/in-app-review',
       '@capacitor-firebase/authentication',
@@ -28,6 +26,10 @@ const config: CapacitorConfig = {
     StatusBar: {
       style: 'Light',
       backgroundColor: '#ffffff',
+    },
+    SystemBars: {
+      // index.html uses viewport-fit=cover; hint it up front to avoid a layout jump on launch.
+      initialViewportFitValueHint: 'cover',
     },
     Keyboard: {
       resize: 'body',
