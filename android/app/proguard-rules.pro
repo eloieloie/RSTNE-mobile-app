@@ -36,3 +36,12 @@
 # @capacitor-firebase/authentication references optional providers we don't ship
 # (only apple.com and google.com are enabled in capacitor.config.ts).
 -dontwarn com.facebook.**
+
+# Capacitor reads @CapacitorPlugin / @Permission at runtime via reflection (Bridge#getPermissionStates).
+# Without these, R8 strips them and Plugin#checkPermissions throws an NPE on startup
+# (crashed build 21 on launch; push-notification permission prompt also never appeared).
+-keep @interface com.getcapacitor.annotation.CapacitorPlugin { *; }
+-keep @interface com.getcapacitor.annotation.Permission { *; }
+-keep @interface com.getcapacitor.annotation.PermissionCallback { *; }
+-keep @interface com.getcapacitor.annotation.ActivityCallback { *; }
+-keep @com.getcapacitor.annotation.CapacitorPlugin class * { *; }
