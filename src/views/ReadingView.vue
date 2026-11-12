@@ -2100,7 +2100,7 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
 
 .chapter-list {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
   gap: var(--space-2);
   padding: var(--space-4);
   overflow-y: auto;
@@ -2108,7 +2108,7 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
 }
 
 .chapter-item {
-  aspect-ratio: 1;
+  height: 48px;
   border-radius: var(--radius-lg);
   background: var(--color-muted);
   color: var(--color-foreground);
@@ -2117,6 +2117,18 @@ watch([bookId, chapterId], async ([newBookId, newChapterId], [oldBookId]) => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Tablet: larger, easier-to-tap chapter/verse tiles */
+@media (min-width: 700px) {
+  .chapter-list {
+    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+    gap: 12px;
+  }
+  .chapter-item {
+    height: 64px;
+    font-size: var(--font-size-md);
+  }
 }
 
 .chapter-item.selected {

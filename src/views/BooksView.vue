@@ -1,5 +1,5 @@
 <template>
-  <div class="books-view">
+  <div class="books-view" :style="{ '--books-font-scale': String(booksFontScale) }">
     <header class="page-header">
       <div class="header-top">
         <div class="header-text">
@@ -262,6 +262,8 @@ const { prefersReducedMotion, sheetSpring, tapScale, overlayFade, staggerTransit
 
 const router = useRouter();
 const settings = useSettings();
+// Book-name size follows the Settings font size (16px = 1x)
+const booksFontScale = computed(() => settings.fontSize / 16);
 const books = ref<Book[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -591,9 +593,10 @@ onMounted(loadBooks);
 }
 
 .book-name {
-  font-size: calc(1.2rem * var(--books-font-scale));
+  font-size: calc(0.95rem * var(--books-font-scale, 1));
   font-weight: 700;
   line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
 .chapter-count {
@@ -655,7 +658,7 @@ onMounted(loadBooks);
 
 .chapter-list {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
   gap: 8px;
   padding: 16px;
   overflow-y: auto;
@@ -663,7 +666,7 @@ onMounted(loadBooks);
 }
 
 .chapter-item {
-  aspect-ratio: 1;
+  height: 48px;
   border-radius: 10px;
   background: #f3f4f6;
   color: #374151;
@@ -673,6 +676,18 @@ onMounted(loadBooks);
   align-items: center;
   justify-content: center;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Tablet: larger, easier-to-tap chapter/verse tiles */
+@media (min-width: 700px) {
+  .chapter-list {
+    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+    gap: 12px;
+  }
+  .chapter-item {
+    height: 64px;
+    font-size: 18px;
+  }
 }
 
 .chapter-item:active {
