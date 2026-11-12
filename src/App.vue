@@ -156,7 +156,7 @@ import { useSettings } from '@/composables/useSettings';
 import { useMotionPresets } from '@/composables/useMotionPresets';
 import { useTheme, DARK_THEMES, THEME_OPTIONS } from '@/composables/useTheme';
 
-const APP_VERSION = '21.1.0';
+const APP_VERSION = '23.1.0';
 
 const route = useRoute();
 const router = useRouter();

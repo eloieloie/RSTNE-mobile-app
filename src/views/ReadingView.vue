@@ -133,7 +133,7 @@
                 class="note-item"
               >
                 <template v-if="editingAdminNoteId === note.note_id">
-                  <textarea v-model="editAdminNoteContent" class="note-edit-textarea" rows="3"></textarea>
+                  <textarea v-model="editAdminNoteContent" class="note-edit-textarea" :style="{ fontSize: settings.fontSize + 'px' }" rows="3"></textarea>
                   <div class="note-edit-actions">
                     <button class="note-save-btn" @click.stop="saveEditAdminNote(verse.verse_id, note.note_id)">Save</button>
                     <button class="note-cancel-btn" @click.stop="cancelEditAdminNote">Cancel</button>
@@ -141,12 +141,12 @@
                   </div>
                 </template>
                 <template v-else>
-                  <div v-if="note.note_title" class="note-title" v-html="formatVerseWithPaleoBora(note.note_title, bookAbbreviations, getDisplayAbbr)"></div>
-                  <div class="note-content" v-html="formatVerseWithPaleoBora(note.note_content, bookAbbreviations, getDisplayAbbr)"></div>
+                  <div v-if="note.note_title" class="note-title" :style="{ fontSize: Math.max(settings.fontSize - 2, 10) + 'px' }" v-html="formatVerseWithPaleoBora(note.note_title, bookAbbreviations, getDisplayAbbr)"></div>
+                  <div class="note-content" :style="{ fontSize: settings.fontSize + 'px' }" v-html="formatVerseWithPaleoBora(note.note_content, bookAbbreviations, getDisplayAbbr)"></div>
                 </template>
               </div>
               <div v-if="isAdmin && addingAdminNoteVerseId === verse.verse_id" class="note-add-row">
-                <textarea v-model="newAdminNoteContent" class="note-edit-textarea" rows="3" placeholder="New admin note…"></textarea>
+                <textarea v-model="newAdminNoteContent" class="note-edit-textarea" :style="{ fontSize: settings.fontSize + 'px' }" rows="3" placeholder="New admin note…"></textarea>
                 <div class="note-edit-actions">
                   <button class="note-save-btn" @click.stop="saveNewAdminNote(verse.verse_id)">Save</button>
                   <button class="note-cancel-btn" @click.stop="cancelAddAdminNote">Cancel</button>
@@ -161,7 +161,7 @@
               <div class="notes-label">My Notes</div>
               <div v-for="note in verse.my_notes" :key="note.personal_note_id" class="note-item">
                 <template v-if="editingPersonalNoteId === note.personal_note_id">
-                  <textarea v-model="editPersonalNoteContent" class="note-edit-textarea" rows="3"></textarea>
+                  <textarea v-model="editPersonalNoteContent" class="note-edit-textarea" :style="{ fontSize: settings.fontSize + 'px' }" rows="3"></textarea>
                   <div class="note-edit-actions">
                     <button class="note-save-btn" @click.stop="saveEditPersonalNote(verse.verse_id, note.personal_note_id)">Save</button>
                     <button class="note-cancel-btn" @click.stop="cancelEditPersonalNote">Cancel</button>
@@ -169,11 +169,11 @@
                   </div>
                 </template>
                 <template v-else>
-                  <div class="note-content" v-html="formatVerseWithPaleoBora(note.note_content, bookAbbreviations, getDisplayAbbr)"></div>
+                  <div class="note-content" :style="{ fontSize: settings.fontSize + 'px' }" v-html="formatVerseWithPaleoBora(note.note_content, bookAbbreviations, getDisplayAbbr)"></div>
                 </template>
               </div>
               <div v-if="addingPersonalNoteVerseId === verse.verse_id" class="note-add-row">
-                <textarea v-model="newPersonalNoteContent" class="note-edit-textarea" rows="3" placeholder="New personal note…"></textarea>
+                <textarea v-model="newPersonalNoteContent" class="note-edit-textarea" :style="{ fontSize: settings.fontSize + 'px' }" rows="3" placeholder="New personal note…"></textarea>
                 <div class="note-edit-actions">
                   <button class="note-save-btn" @click.stop="saveNewPersonalNote(verse.verse_id)">Save</button>
                   <button class="note-cancel-btn" @click.stop="cancelAddPersonalNote">Cancel</button>
